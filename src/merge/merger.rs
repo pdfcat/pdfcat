@@ -4,10 +4,12 @@ use std::path::{Path, PathBuf};
 use crate::Result;
 // Assuming these types are defined in your crate
 use crate::error::PdfCatError;
-use crate::io::PdfReader;
+use crate::io::PdfReaderV1;
+use crate::validation::Validator;
 
 /// The result of a merge operation, which may be a DryRun report or the final Document.
 #[derive(Debug, Clone)]
+#[expect(clippy::large_enum_variant)]
 pub enum MergeResult {
     /// Indicates a simulation was run, containing the total number of pages.
     #[allow(unused)]
@@ -36,6 +38,8 @@ impl PdfMerger {
     /// Returns an error if the input list is empty, if any file cannot be read, or
     /// if a structural error occurs during the PDF merging process.
     pub fn merge(paths: Vec<PathBuf>, dry_run: bool, verbose: bool) -> Result<MergeResult> {
+
+        
         if paths.is_empty() {
             return Err(PdfCatError::NoFilesToMerge);
         }
@@ -54,10 +58,10 @@ impl PdfMerger {
 
             // We load the document here for validation and to reuse it later,
             // avoiding a second load in the non-dry-run path.
-            let doc = PdfReader::read(path)?;
+            let doc = PdfReaderV1::read(path)?;
 
             let page_count = doc.get_pages().len();
-            println!(" ✓ ({} pages)", page_count);
+            println!(" ✓ ({page_count} pages)");
             total_pages += page_count;
 
             if verbose {
@@ -106,7 +110,7 @@ impl PdfMerger {
             doc.renumber_objects_with(max_id + 1);
             max_id = doc.max_id;
 
-            let page_ids: Vec<ObjectId> = doc.get_pages().into_iter().map(|(_, id)| id).collect();
+            let page_ids: Vec<ObjectId> = doc.get_pages().into_values().collect();
             let page_count = page_ids.len();
 
             // Merge objects from the new document into the merged document
@@ -115,7 +119,7 @@ impl PdfMerger {
             // Attach pages to the merged document's page tree structure
             Self::append_pages_to_page_tree(&mut merged, page_ids, page_count)?;
 
-            println!("    → {} pages added", page_count);
+            println!("    → {page_count} pages added");
         }
 
         // Final cleanup for the merged document
@@ -123,7 +127,7 @@ impl PdfMerger {
         merged.compress();
 
         let final_count = merged.get_pages().len();
-        println!("  Total pages: {}", final_count);
+        println!("  Total pages: {final_count}");
 
         Ok(MergeResult::Document(merged))
     }
@@ -169,7 +173,7 @@ impl PdfMerger {
             println!("  {}. {} ({} pages)", idx + 1, path.display(), page_count);
         }
 
-        println!("\n  Total pages in merged document: {}", total_pages);
+        println!("\n  Total pages in merged document: {total_pages}");
         Ok(())
     }
 
@@ -179,16 +183,13 @@ impl PdfMerger {
         println!("    Version: {}", &doc.version);
 
         // Try to get page dimensions of the first page
-        if let Some((_, page_id)) = doc.get_pages().into_iter().next() {
-            if let Ok(page_dict) = doc.get_object(page_id).and_then(|o| o.as_dict()) {
-                if let Ok(mediabox) = page_dict.get(b"MediaBox").and_then(|o| o.as_array()) {
-                    if mediabox.len() >= 4 {
-                        if let (Ok(w), Ok(h)) = (mediabox[2].as_float(), mediabox[3].as_float()) {
-                            println!("    Page size: {:.1} x {:.1} pts", w, h);
-                        }
-                    }
-                }
-            }
+        if let Some((_, page_id)) = doc.get_pages().into_iter().next()
+            && let Ok(page_dict) = doc.get_object(page_id).and_then(|o| o.as_dict())
+            && let Ok(mediabox) = page_dict.get(b"MediaBox").and_then(|o| o.as_array())
+            && mediabox.len() >= 4
+            && let (Ok(w), Ok(h)) = (mediabox[2].as_float(), mediabox[3].as_float())
+        {
+            println!("    Page size: {w:.1} x {h:.1} pts");
         }
 
         // Count total objects

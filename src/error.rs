@@ -266,7 +266,7 @@ impl fmt::Display for PdfCatError {
                 )
             }
             Self::MergeFailed { reason } => {
-                write!(f, "Merge operation failed: {}", reason)
+                write!(f, "Merge operation failed: {reason}")
             }
             Self::BookmarkFailed { path, reason } => {
                 write!(
@@ -277,19 +277,19 @@ impl fmt::Display for PdfCatError {
                 )
             }
             Self::MetadataFailed { reason } => {
-                write!(f, "Failed to set metadata: {}", reason)
+                write!(f, "Failed to set metadata: {reason}")
             }
             Self::InvalidConfig { message } => {
-                write!(f, "Invalid configuration: {}", message)
+                write!(f, "Invalid configuration: {message}")
             }
             Self::Cancelled => {
                 write!(f, "Operation cancelled by user")
             }
             Self::Io { source } => {
-                write!(f, "I/O error: {}", source)
+                write!(f, "I/O error: {source}")
             }
             Self::Other { message } => {
-                write!(f, "{}", message)
+                write!(f, "{message}")
             }
         }
     }
