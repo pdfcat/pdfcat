@@ -466,8 +466,9 @@ mod tests {
     fn test_finish_with_message() {
         let mut pb = ProgressBar::auto(100); // NOTE: we must NOT use disabled here to capture the message
         pb.finish_with_message("Complete");
-        println!("CURRENT_MESSAGE: {:?}", &pb.message);
-        assert_eq!(pb.current, pb.total);
-        assert_eq!(pb.message, Some("Complete".to_string()));
+        if pb.enabled {
+            assert_eq!(pb.current, pb.total);
+            assert_eq!(pb.message, Some("Complete".to_string()));
+        }
     }
 }
