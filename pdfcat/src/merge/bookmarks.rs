@@ -264,7 +264,7 @@ mod tests {
         let mut doc = create_test_document_with_pages(10);
         let manager = BookmarkManager::new();
 
-        let paths = vec![
+        let paths = [
             PathBuf::from("file1.pdf"),
             PathBuf::from("file2.pdf"),
             PathBuf::from("file3.pdf"),

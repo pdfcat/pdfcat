@@ -300,12 +300,12 @@ mod tests {
         assert!(result.is_ok());
 
         // Verify rotation was applied
-        let page_ids: Vec<ObjectId> = doc.get_pages().into_iter().map(|(_, id)| id).collect();
+        let page_ids: Vec<ObjectId> = doc.get_pages().into_values().collect();
         for page_id in page_ids {
-            if let Ok(Object::Dictionary(dict)) = doc.get_object(page_id) {
-                if let Ok(rotation) = dict.get(b"Rotate").and_then(|r| r.as_i64()) {
-                    assert_eq!(rotation, 90);
-                }
+            if let Ok(Object::Dictionary(dict)) = doc.get_object(page_id)
+                && let Ok(rotation) = dict.get(b"Rotate").and_then(|r| r.as_i64())
+            {
+                assert_eq!(rotation, 90);
             }
         }
     }

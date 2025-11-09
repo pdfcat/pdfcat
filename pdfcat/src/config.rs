@@ -13,11 +13,12 @@ use crate::PdfCatError;
 use std::{path::PathBuf, str::FromStr};
 
 /// Compression level for the output PDF.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum CompressionLevel {
     /// No compression - preserves exact quality and structure.
     None,
     /// Balanced compression - good trade-off between size and processing time.
+    #[default]
     Standard,
     /// Maximum compression - smallest file size, longer processing time.
     Maximum,
@@ -45,12 +46,6 @@ impl FromStr for CompressionLevel {
                 ),
             }),
         }
-    }
-}
-
-impl Default for CompressionLevel {
-    fn default() -> Self {
-        Self::Standard
     }
 }
 
@@ -261,20 +256,15 @@ impl Metadata {
 }
 
 /// Output file overwrite behavior.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OverwriteMode {
     /// Prompt the user before overwriting (default).
+    #[default]
     Prompt,
     /// Always overwrite without prompting.
     Force,
     /// Never overwrite, error if file exists.
     NoClobber,
-}
-
-impl Default for OverwriteMode {
-    fn default() -> Self {
-        Self::Prompt
-    }
 }
 
 /// Complete configuration for a PDF merge operation.

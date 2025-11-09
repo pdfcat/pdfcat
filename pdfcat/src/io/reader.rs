@@ -484,7 +484,7 @@ mod tests {
         let pdf2 = create_test_pdf(&temp_dir, "test2.pdf");
 
         let reader = PdfReader::new();
-        let results = reader.load_sequential(&vec![pdf1, pdf2]).await;
+        let results = reader.load_sequential(&[pdf1, pdf2]).await;
 
         assert_eq!(results.len(), 2);
         assert!(results[0].is_ok());
@@ -499,7 +499,7 @@ mod tests {
         let pdf3 = create_test_pdf(&temp_dir, "test3.pdf");
 
         let reader = PdfReader::new();
-        let results = reader.load_parallel(&vec![pdf1, pdf2, pdf3], 2).await;
+        let results = reader.load_parallel(&[pdf1, pdf2, pdf3], 2).await;
 
         assert_eq!(results.len(), 3);
         assert!(results.iter().all(|r| r.is_ok()));
@@ -512,7 +512,7 @@ mod tests {
         let pdf2 = create_test_pdf(&temp_dir, "test2.pdf");
 
         let reader = PdfReader::new();
-        let (results, stats) = reader.load_all(&vec![pdf1, pdf2], 4).await;
+        let (results, stats) = reader.load_all(&[pdf1, pdf2], 4).await;
 
         assert_eq!(results.len(), 2);
         assert_eq!(stats.success_count, 2);
@@ -530,7 +530,7 @@ mod tests {
         let mut progress_count = 0;
 
         let results = reader
-            .load_with_progress(&vec![pdf1, pdf2], 2, |_, _| {
+            .load_with_progress(&[pdf1, pdf2], 2, |_, _| {
                 progress_count += 1;
             })
             .await;
@@ -547,7 +547,7 @@ mod tests {
         std::fs::File::create(&invalid_pdf).unwrap();
 
         let reader = PdfReader::new();
-        let (results, stats) = reader.load_all(&vec![pdf1, invalid_pdf], 2).await;
+        let (results, stats) = reader.load_all(&[pdf1, invalid_pdf], 2).await;
 
         assert_eq!(results.len(), 2);
         assert_eq!(stats.success_count, 1);
