@@ -1,5 +1,4 @@
-use crate::{error::PdfCatError, io::PdfReader};
-use anyhow::Result;
+use crate::{Result, error::PdfCatError, io::PdfReaderV1};
 use lopdf::{Document, Object};
 use std::path::PathBuf;
 
@@ -31,7 +30,7 @@ fn collect_paths_for_pattern<P: AsRef<str>>(pattern: P) -> Result<Vec<PathBuf>> 
         let path = entry.map_err(|err| PdfCatError::Other {
             message: err.to_string(),
         })?;
-        PdfReader::check_path_exists(&path)?;
+        PdfReaderV1::check_path_exists(&path)?;
         resolved_paths.push(path);
     }
 
@@ -42,11 +41,11 @@ fn collect_paths_for_pattern<P: AsRef<str>>(pattern: P) -> Result<Vec<PathBuf>> 
 pub fn copy_references(target: &mut Document, source: &Document, obj: &Object) {
     match obj {
         Object::Reference(ref_id) => {
-            if !target.objects.contains_key(ref_id) {
-                if let Ok(referenced_obj) = source.get_object(*ref_id) {
-                    target.objects.insert(*ref_id, referenced_obj.clone());
-                    copy_references(target, source, referenced_obj);
-                }
+            if !target.objects.contains_key(ref_id)
+                && let Ok(referenced_obj) = source.get_object(*ref_id)
+            {
+                target.objects.insert(*ref_id, referenced_obj.clone());
+                copy_references(target, source, referenced_obj);
             }
         }
         Object::Dictionary(dict) => {

@@ -1,24 +1,30 @@
-mod cli;
+#![expect(unused)]
+
+pub mod cli;
 pub mod config;
 mod error;
 pub use error::*;
 pub mod io;
 mod merge;
-mod output;
+pub mod output;
+pub mod validation;
+
 pub(crate) mod utils;
 
 use crate::{
     cli::Cli,
-    config::Config,
-    io::PdfWriter,
+    io::PdfWriterV1,
     merge::{MergeResult, PdfMerger},
+    validation::Validator,
 };
 
 use clap::Parser;
 
-pub fn run() -> Result<()> {
+pub async fn run() -> Result<()> {
     let cli = Cli::parse();
-    let config = Config::try_from(&cli)?;
+    let config = cli.to_config()?;
+    let validator = Validator::new();
+    let validation_info = validator.validate_config(&config).await?;
 
     if config.dry_run {
         println!("🔍 DRY RUN MODE - No files will be created\n");
@@ -37,9 +43,9 @@ pub fn run() -> Result<()> {
     match merged {
         MergeResult::DryRun { .. } => {}
         MergeResult::Document(mut doc) => {
-            println!("\nWriting to: {}", &cli.output);
-            PdfWriter::write(&mut doc, std::env::current_dir()?.join(&config.output))?;
-            println!("✓ Successfully created {}", &cli.output);
+            println!("\nWriting to: {}", &cli.output.display());
+            PdfWriterV1::write(&mut doc, std::env::current_dir()?.join(&config.output))?;
+            println!("✓ Successfully created {}", &cli.output.display());
         }
     }
 

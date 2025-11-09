@@ -10,7 +10,7 @@
 use anyhow::{Context, Result, bail};
 
 use crate::PdfCatError;
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 /// Compression level for the output PDF.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -23,7 +23,8 @@ pub enum CompressionLevel {
     Maximum,
 }
 
-impl CompressionLevel {
+impl FromStr for CompressionLevel {
+    type Err = crate::PdfCatError;
     /// Parse compression level from string.
     ///
     /// # Arguments
@@ -33,15 +34,14 @@ impl CompressionLevel {
     /// # Errors
     ///
     /// Returns an error if the string doesn't match a valid compression level.
-    pub fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> crate::Result<Self> {
         match s.to_lowercase().as_str() {
             "none" => Ok(Self::None),
             "standard" => Ok(Self::Standard),
             "maximum" => Ok(Self::Maximum),
-            _ => bail!(PdfCatError::InvalidConfig {
+            _ => Err(PdfCatError::InvalidConfig {
                 message: format!(
-                    "Invalid compression level: {}. Must be one of: none, standard, maximum",
-                    s
+                    "Invalid compression level: {s}. Must be one of: none, standard, maximum"
                 ),
             }),
         }
@@ -81,7 +81,7 @@ impl Rotation {
             180 => Ok(Self::Rotate180),
             270 => Ok(Self::Clockwise270),
             _ => bail!(PdfCatError::InvalidConfig {
-                message: format!("Invalid rotation: {}. Must be 90, 180, or 270", degrees),
+                message: format!("Invalid rotation: {degrees}. Must be 90, 180, or 270"),
             }),
         }
     }
@@ -144,10 +144,7 @@ impl PageRange {
             if part.contains('-') {
                 let parts: Vec<&str> = part.split('-').collect();
                 if parts.len() != 2 {
-                    bail!(
-                        "Invalid page range format: {}. Expected format like '1-5'",
-                        part
-                    );
+                    bail!("Invalid page range format: {part}. Expected format like '1-5'");
                 }
 
                 let start: u32 = parts[0]
@@ -166,9 +163,7 @@ impl PageRange {
 
                 if start > end {
                     bail!(
-                        "Invalid range {}-{}: start page must be less than or equal to end page",
-                        start,
-                        end
+                        "Invalid range {start}-{end}: start page must be less than or equal to end page"
                     );
                 }
 
@@ -176,7 +171,7 @@ impl PageRange {
             } else {
                 let page: u32 = part
                     .parse()
-                    .with_context(|| format!("Invalid page number: {}", part))?;
+                    .with_context(|| format!("Invalid page number: {part}"))?;
 
                 if page == 0 {
                     bail!("Page numbers must be positive (1-indexed)");
@@ -353,10 +348,10 @@ impl Config {
             bail!("Cannot use both --verbose and --quiet");
         }
 
-        if let Some(jobs) = self.jobs {
-            if jobs == 0 {
-                bail!("Number of jobs must be at least 1");
-            }
+        if let Some(jobs) = self.jobs
+            && jobs == 0
+        {
+            bail!("Number of jobs must be at least 1");
         }
 
         // Validate that output path is not in inputs

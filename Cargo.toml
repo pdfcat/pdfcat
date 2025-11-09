@@ -18,6 +18,13 @@ name = "pdfcat"
 path = "src/lib.rs"
 
 [dependencies]
+tokio = { version = "1.35", features = [
+    "rt-multi-thread",
+    "fs",
+    "io-util",
+    "macros",
+] }
+futures = "0.3"
 clap = { version = "4.5", features = [
     "derive",
     "wrap_help",
@@ -36,5 +43,12 @@ glob = "0.3"    # glob is often easier for simple expansion
 walkdir = "2.3" # Useful for recursive globbing (**)
 
 [dev-dependencies]
+tokio = { version = "1.35", features = [
+    "fs",
+    "io-util",
+    "macros",
+    "rt-multi-thread",
+] }
 rstest = "0.26"
 tempfile = "3.23"
+serial_test = "3"
