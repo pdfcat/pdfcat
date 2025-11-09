@@ -149,7 +149,7 @@ impl PdfWriter {
     /// # }
     /// ```
     pub async fn save(&self, doc: &Document, path: &Path) -> Result<()> {
-        let stats = self.save_with_stats(doc, path).await?;
+        let _stats = self.save_with_stats(doc, path).await?;
         Ok(())
     }
 
@@ -361,7 +361,6 @@ fn format_file_size(size: u64) -> String {
 mod tests {
     use super::*;
     use lopdf::dictionary;
-    use std::io::Write as StdWrite;
     use tempfile::TempDir;
 
     fn create_test_document() -> Document {

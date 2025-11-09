@@ -115,21 +115,21 @@ mod tests {
     #[test]
     fn test_create_formatter() {
         let config = create_test_config(false, false);
-        let formatter = create_formatter(&config);
+        let _formatter = create_formatter(&config);
         // Should create without panicking
     }
 
     #[test]
     fn test_create_formatter_quiet() {
         let config = create_test_config(true, false);
-        let formatter = create_formatter(&config);
+        let _formatter = create_formatter(&config);
         // Should create without panicking
     }
 
     #[test]
     fn test_create_formatter_verbose() {
         let config = create_test_config(false, true);
-        let formatter = create_formatter(&config);
+        let _formatter = create_formatter(&config);
         // Should create without panicking
     }
 }
