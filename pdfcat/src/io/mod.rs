@@ -22,12 +22,6 @@
 //! # }
 //! ```
 
-mod reader_v1;
-mod writer_v1;
-
-pub use reader_v1::*;
-pub use writer_v1::*;
-
 pub mod reader;
 pub mod writer;
 

@@ -17,8 +17,8 @@ use clap::Parser;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use crate::config::{CompressionLevel, Config, Metadata, OverwriteMode, PageRange, Rotation};
-use crate::error::{PdfCatError, Result};
+use pdfcat::config::{CompressionLevel, Config, Metadata, OverwriteMode, PageRange, Rotation};
+use pdfcat::error::{PdfCatError, Result};
 
 /// Concatenate PDF files into a single document.
 ///
@@ -27,7 +27,7 @@ use crate::error::{PdfCatError, Result};
 /// comprehensive error handling.
 #[derive(Parser, Debug)]
 #[command(name = "pdfcat")]
-#[command(version)]
+#[command(version, propagate_version = true)]
 #[command(about = "Concatenate PDF files into a single document", long_about = None)]
 #[command(author)]
 #[command(arg_required_else_help = true)]
@@ -329,7 +329,13 @@ impl Cli {
     ///
     /// Returns an error if the input list file cannot be read or parsed.
     pub async fn get_all_inputs(&self) -> Result<Vec<PathBuf>> {
-        let mut all_inputs = self.inputs.clone();
+        let patterns: Vec<String> = self
+            .inputs
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect();
+
+        let mut all_inputs = pdfcat::utils::collect_paths_for_patterns(patterns)?;
 
         if let Some(ref input_list_path) = self.input_list {
             let additional_inputs = self.read_input_list(input_list_path).await?;
@@ -419,7 +425,7 @@ mod tests {
 
     fn create_test_cli(inputs: Vec<&str>, output: &str) -> Cli {
         Cli {
-            inputs: inputs.iter().map(|s| PathBuf::from(s)).collect(),
+            inputs: inputs.iter().map(PathBuf::from).collect(),
             output: PathBuf::from(output),
             dry_run: false,
             verbose: false,
@@ -572,12 +578,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_inputs_no_list() {
-        let cli = create_test_cli(vec!["a.pdf", "b.pdf"], "out.pdf");
-        let inputs = cli.get_all_inputs().await.unwrap();
-
-        assert_eq!(inputs.len(), 2);
-        assert_eq!(inputs[0], PathBuf::from("a.pdf"));
-        assert_eq!(inputs[1], PathBuf::from("b.pdf"));
+        let cli = create_test_cli(vec![], "out.pdf");
+        let inputs = cli.get_all_inputs().await;
+        assert!(inputs.is_err()); // No files to merge
     }
 
     #[tokio::test]

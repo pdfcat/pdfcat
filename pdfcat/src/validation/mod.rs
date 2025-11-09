@@ -157,6 +157,7 @@ impl ValidationSummary {
 /// Validator for PDF files and configuration.
 pub struct Validator {
     /// Whether to perform strict validation.
+    #[expect(unused)]
     strict: bool,
 }
 
@@ -341,8 +342,6 @@ impl Validator {
 
         // Get absolut output path
         if let Ok(p) = output_path.canonicalize() {
-            println!("OUT_PATH: {}", p.display());
-            
             // Check if output directory exists and is writable
             if let Some(parent) = p.parent() {
                 if !parent.exists() {
