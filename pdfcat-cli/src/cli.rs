@@ -425,7 +425,7 @@ mod tests {
 
     fn create_test_cli(inputs: Vec<&str>, output: &str) -> Cli {
         Cli {
-            inputs: inputs.iter().map(|s| PathBuf::from(s)).collect(),
+            inputs: inputs.iter().map(PathBuf::from).collect(),
             output: PathBuf::from(output),
             dry_run: false,
             verbose: false,
