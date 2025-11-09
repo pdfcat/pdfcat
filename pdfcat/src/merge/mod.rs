@@ -40,18 +40,18 @@
 //! # }
 //! ```
 
-pub mod merger;
-pub mod pages;
 pub mod bookmarks;
+pub mod merger;
 pub mod metadata;
+pub mod pages;
 
-pub use merger::{Merger, MergeResult, MergeStatistics};
-pub use pages::{PageExtractor, PageRotation};
 pub use bookmarks::BookmarkManager;
+pub use merger::{MergeResult, MergeStatistics, Merger};
 pub use metadata::MetadataManager;
+pub use pages::{PageExtractor, PageRotation};
 
-use crate::error::Result;
 use crate::config::Config;
+use crate::error::Result;
 use lopdf::Document;
 
 /// Merge multiple PDF files according to configuration.
@@ -97,10 +97,7 @@ mod tests {
     #[expect(unused)]
     fn create_test_config() -> Config {
         Config {
-            inputs: vec![
-                PathBuf::from("test1.pdf"),
-                PathBuf::from("test2.pdf"),
-            ],
+            inputs: vec![PathBuf::from("test1.pdf"), PathBuf::from("test2.pdf")],
             output: PathBuf::from("output.pdf"),
             dry_run: false,
             verbose: false,
