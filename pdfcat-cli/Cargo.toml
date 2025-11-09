@@ -1,0 +1,30 @@
+[package]
+name = "pdfcat-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "pdfcat"
+path = "src/main.rs"
+
+[dependencies]
+pdfcat = { path = "../pdfcat" }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dependencies.clap]
+version = "4.5"
+features = ["derive", "wrap_help", "string", "env", "cargo"]
+
+[dev-dependencies]
+tokio.workspace = true
+rstest = "0.26"
+tempfile = "3.23"

@@ -324,6 +324,7 @@ pub struct Config {
 }
 
 impl Config {
+    /// Returns a reference to inputs.
     pub fn inputs(&self) -> &[PathBuf] {
         self.inputs.as_ref()
     }

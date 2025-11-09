@@ -23,7 +23,6 @@
 use lopdf::Document;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
-use tokio::task;
 
 use crate::error::{PdfCatError, Result};
 
