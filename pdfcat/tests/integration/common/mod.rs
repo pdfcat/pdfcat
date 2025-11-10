@@ -2,13 +2,13 @@
 //!
 //! These tests exercise the full application flow using real PDF fixtures.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Get the path to a test fixture.
 ///
 /// # Arguments
 ///
-/// * `name` - Name of the fixture file (e.g., "simple.pdf")
+/// * `name` - Name of the fixture file (e.g., "basic.pdf")
 ///
 /// # Returns
 ///
@@ -58,9 +58,8 @@ pub fn require_fixture(name: &str) {
 ///
 /// A temporary file path that will be cleaned up
 pub fn temp_output_path() -> tempfile::TempPath {
-    tempfile::NamedTempFile::new()
-        .expect("Failed to create temp file")
-        .into_temp_path()
+    let pdf = tempfile::NamedTempFile::new().expect("Failed to create temp file");
+    pdf.into_temp_path()
 }
 
 #[cfg(test)]
@@ -69,14 +68,14 @@ mod tests {
 
     #[test]
     fn test_fixture_path() {
-        let path = fixture_path("simple.pdf");
-        assert!(path.ends_with("tests/fixtures/simple.pdf"));
+        let path = fixture_path("basic.pdf");
+        assert!(path.ends_with("tests/fixtures/basic.pdf"));
     }
 
     #[test]
     fn test_fixture_exists() {
         // This will be true once fixtures are in place
-        let exists = fixture_exists("simple.pdf");
+        let _exists = fixture_exists("basic.pdf");
         // Don't assert - fixtures may not be present in all test environments
     }
 }
