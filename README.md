@@ -2,7 +2,7 @@
 
 **Concatenate PDF files into a single document**.
 
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 ## Features
 
