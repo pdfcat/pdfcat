@@ -8,6 +8,7 @@ repository.workspace = true
 license-file.workspace = true
 keywords.workspace = true
 categories.workspace = true
+build = "build.rs"
 
 [[bin]]
 name = "pdfcat"
@@ -25,3 +26,9 @@ features = ["derive", "wrap_help", "string", "env", "cargo"]
 tokio.workspace = true
 rstest = "0.26"
 tempfile = "3.23"
+
+[build-dependencies]
+tokio.workspace = true
+pdfcat = { path = "../pdfcat" }
+clap = { version = "4", features = ["derive"] }
+clap_mangen = "0.2"
