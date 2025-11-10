@@ -11,6 +11,7 @@ use lopdf::{Dictionary, Document, Object};
 use std::time::SystemTime;
 
 /// Manager for PDF metadata.
+#[derive(Debug, Clone)]
 pub struct MetadataManager;
 
 impl MetadataManager {
@@ -219,10 +220,7 @@ fn format_pdf_date(time: SystemTime) -> String {
     let min = (time_remainder % 3_600) / 60;
     let sec = time_remainder % 60;
 
-    format!(
-        "D:{:04}{:02}{:02}{:02}{:02}{:02}Z",
-        year, month, day, hour, min, sec
-    )
+    format!("D:{year:04}{month:02}{day:02}{hour:02}{min:02}{sec:02}Z",)
 }
 
 #[cfg(test)]

@@ -1,25 +1,21 @@
 //! Integration tests for bookmark functionality.
 
-use pdfcat::config::{Config, CompressionLevel, Metadata, OverwriteMode};
-use pdfcat::merge::{merge_pdfs, BookmarkManager};
+use pdfcat::config::{CompressionLevel, Config, Metadata, OverwriteMode};
 use pdfcat::io::load_pdf;
-use std::path::PathBuf;
+use pdfcat::merge::{BookmarkManager, merge_pdfs};
 
-mod common;
-use common::{fixture_path, require_fixture, temp_output_path};
+use crate::common::{fixture_path, require_fixture, temp_output_path};
 
 #[tokio::test]
 async fn test_merge_with_bookmarks() {
-    require_fixture("simple.pdf");
-    
+    require_fixture("basic.pdf");
+
     let output = temp_output_path();
-    
+    let output_path = output.to_path_buf();
+
     let config = Config {
-        inputs: vec![
-            fixture_path("simple.pdf"),
-            fixture_path("simple.pdf"),
-        ],
-        output: output.to_path_buf(),
+        inputs: vec![fixture_path("basic.pdf"), fixture_path("basic.pdf")],
+        output: output_path.clone(),
         dry_run: false,
         verbose: false,
         overwrite_mode: OverwriteMode::Force,
@@ -32,28 +28,29 @@ async fn test_merge_with_bookmarks() {
         page_range: None,
         rotation: None,
     };
-    
+
     let result = merge_pdfs(&config).await;
     assert!(result.is_ok());
-    
+
     // Load output and verify bookmarks were added
-    let output_doc = load_pdf(&output).await.unwrap();
+    let output_doc = load_pdf(&output_path).await.unwrap();
     let bookmark_manager = BookmarkManager::new();
-    assert!(bookmark_manager.has_bookmarks(&output_doc), "Bookmarks should be present");
+    assert!(
+        bookmark_manager.has_bookmarks(&output_doc),
+        "Bookmarks should be present"
+    );
 }
 
 #[tokio::test]
 async fn test_merge_without_bookmarks() {
-    require_fixture("simple.pdf");
-    
+    require_fixture("basic.pdf");
+
     let output = temp_output_path();
-    
+    let output_path = output.to_path_buf();
+
     let config = Config {
-        inputs: vec![
-            fixture_path("simple.pdf"),
-            fixture_path("simple.pdf"),
-        ],
-        output: output.to_path_buf(),
+        inputs: vec![fixture_path("basic.pdf"), fixture_path("basic.pdf")],
+        output: output_path.clone(),
         dry_run: false,
         verbose: false,
         overwrite_mode: OverwriteMode::Force,
@@ -66,32 +63,33 @@ async fn test_merge_without_bookmarks() {
         page_range: None,
         rotation: None,
     };
-    
+
     let result = merge_pdfs(&config).await;
     assert!(result.is_ok());
-    
+
     // Load output and verify no bookmarks
-    let output_doc = load_pdf(&output).await.unwrap();
-    let bookmark_manager = BookmarkManager::new();
-    
+    let _output_doc = load_pdf(&output_path).await.unwrap();
+    let _bookmark_manager = BookmarkManager::new();
+
     // Note: If input PDFs have bookmarks, they might be preserved
     // This test mainly ensures the --bookmarks flag works
 }
 
 #[tokio::test]
 async fn test_bookmarks_with_multiple_files() {
-    require_fixture("simple.pdf");
+    require_fixture("basic.pdf");
     require_fixture("multi_page.pdf");
-    
+
     let output = temp_output_path();
-    
+    let output_path = output.to_path_buf();
+
     let config = Config {
         inputs: vec![
-            fixture_path("simple.pdf"),
+            fixture_path("basic.pdf"),
             fixture_path("multi_page.pdf"),
-            fixture_path("simple.pdf"),
+            fixture_path("basic.pdf"),
         ],
-        output: output.to_path_buf(),
+        output: output_path.clone(),
         dry_run: false,
         verbose: false,
         overwrite_mode: OverwriteMode::Force,
@@ -104,11 +102,11 @@ async fn test_bookmarks_with_multiple_files() {
         page_range: None,
         rotation: None,
     };
-    
+
     let result = merge_pdfs(&config).await;
     assert!(result.is_ok());
-    
-    let output_doc = load_pdf(&output).await.unwrap();
+
+    let output_doc = load_pdf(&output_path).await.unwrap();
     let bookmark_manager = BookmarkManager::new();
     assert!(bookmark_manager.has_bookmarks(&output_doc));
 }
@@ -116,17 +114,18 @@ async fn test_bookmarks_with_multiple_files() {
 #[tokio::test]
 async fn test_bookmarks_preserve_existing() {
     // If fixture has bookmarks, verify they're preserved
-    if common::fixture_exists("with_bookmarks.pdf") {
+    if crate::common::fixture_exists("with_bookmarks.pdf") {
         require_fixture("with_bookmarks.pdf");
-        
+
         let output = temp_output_path();
-        
+        let output_path = output.to_path_buf();
+
         let config = Config {
             inputs: vec![
                 fixture_path("with_bookmarks.pdf"),
-                fixture_path("simple.pdf"),
+                fixture_path("basic.pdf"),
             ],
-            output: output.to_path_buf(),
+            output: output_path.clone(),
             dry_run: false,
             verbose: false,
             overwrite_mode: OverwriteMode::Force,
@@ -139,11 +138,11 @@ async fn test_bookmarks_preserve_existing() {
             page_range: None,
             rotation: None,
         };
-        
+
         let result = merge_pdfs(&config).await;
         assert!(result.is_ok());
-        
-        let output_doc = load_pdf(&output).await.unwrap();
+
+        let output_doc = load_pdf(&output_path).await.unwrap();
         let bookmark_manager = BookmarkManager::new();
         assert!(bookmark_manager.has_bookmarks(&output_doc));
     }
@@ -151,13 +150,13 @@ async fn test_bookmarks_preserve_existing() {
 
 #[tokio::test]
 async fn test_bookmarks_single_file() {
-    require_fixture("simple.pdf");
-    
+    require_fixture("basic.pdf");
+
     let output = temp_output_path();
-    
+
     // Even with single file, bookmarks should work
     let config = Config {
-        inputs: vec![fixture_path("simple.pdf")],
+        inputs: vec![fixture_path("basic.pdf")],
         output: output.to_path_buf(),
         dry_run: false,
         verbose: false,
@@ -171,7 +170,7 @@ async fn test_bookmarks_single_file() {
         page_range: None,
         rotation: None,
     };
-    
+
     let result = merge_pdfs(&config).await;
     assert!(result.is_ok());
 }
@@ -179,15 +178,16 @@ async fn test_bookmarks_single_file() {
 #[tokio::test]
 async fn test_bookmarks_with_page_extraction() {
     require_fixture("multi_page.pdf");
-    
+
     let output = temp_output_path();
-    
+    let output_path = output.to_path_buf();
+
     let config = Config {
         inputs: vec![
             fixture_path("multi_page.pdf"),
             fixture_path("multi_page.pdf"),
         ],
-        output: output.to_path_buf(),
+        output: output_path.clone(),
         dry_run: false,
         verbose: false,
         overwrite_mode: OverwriteMode::Force,
@@ -200,11 +200,11 @@ async fn test_bookmarks_with_page_extraction() {
         page_range: Some(pdfcat::config::PageRange::parse("1-2").unwrap()),
         rotation: None,
     };
-    
+
     let result = merge_pdfs(&config).await;
     assert!(result.is_ok());
-    
-    let output_doc = load_pdf(&output).await.unwrap();
+
+    let output_doc = load_pdf(&output_path).await.unwrap();
     let bookmark_manager = BookmarkManager::new();
     // Should still have bookmarks even with page extraction
     assert!(bookmark_manager.has_bookmarks(&output_doc));
@@ -212,46 +212,42 @@ async fn test_bookmarks_with_page_extraction() {
 
 #[tokio::test]
 async fn test_bookmark_manager_direct() {
-    require_fixture("simple.pdf");
-    
-    let mut doc = load_pdf(&fixture_path("simple.pdf")).await.unwrap();
-    
+    require_fixture("basic.pdf");
+
+    let mut doc = load_pdf(&fixture_path("basic.pdf")).await.unwrap();
+
     let bookmark_manager = BookmarkManager::new();
-    
+
     // Initially no bookmarks
     assert!(!bookmark_manager.has_bookmarks(&doc));
-    
+
+    let fixture = fixture_path("basic.pdf");
     // Add bookmarks
-    let paths = vec![
-        fixture_path("simple.pdf").as_path(),
-        fixture_path("simple.pdf").as_path(),
-    ];
+    let paths = [fixture.as_path(), fixture.as_path()];
     let result = bookmark_manager.add_bookmarks_for_files(&mut doc, &paths);
     assert!(result.is_ok());
-    
+
     // Now should have bookmarks
     assert!(bookmark_manager.has_bookmarks(&doc));
-    
+
     // Remove bookmarks
     let result = bookmark_manager.remove_bookmarks(&mut doc);
     assert!(result.is_ok());
-    
+
     // Should be gone
     assert!(!bookmark_manager.has_bookmarks(&doc));
 }
 
 #[tokio::test]
 async fn test_bookmarks_with_rotation() {
-    require_fixture("simple.pdf");
-    
+    require_fixture("basic.pdf");
+
     let output = temp_output_path();
-    
+    let output_path = output.to_path_buf();
+
     let config = Config {
-        inputs: vec![
-            fixture_path("simple.pdf"),
-            fixture_path("simple.pdf"),
-        ],
-        output: output.to_path_buf(),
+        inputs: vec![fixture_path("basic.pdf"), fixture_path("basic.pdf")],
+        output: output_path.clone(),
         dry_run: false,
         verbose: false,
         overwrite_mode: OverwriteMode::Force,
@@ -264,11 +260,11 @@ async fn test_bookmarks_with_rotation() {
         page_range: None,
         rotation: Some(pdfcat::config::Rotation::Clockwise90),
     };
-    
+
     let result = merge_pdfs(&config).await;
     assert!(result.is_ok());
-    
-    let output_doc = load_pdf(&output).await.unwrap();
+
+    let output_doc = load_pdf(&output_path).await.unwrap();
     let bookmark_manager = BookmarkManager::new();
     assert!(bookmark_manager.has_bookmarks(&output_doc));
 }

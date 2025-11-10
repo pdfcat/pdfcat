@@ -320,12 +320,6 @@ impl From<lopdf::Error> for PdfCatError {
     }
 }
 
-impl From<anyhow::Error> for PdfCatError {
-    fn from(err: anyhow::Error) -> Self {
-        Self::other(err.to_string())
-    }
-}
-
 impl PdfCatError {
     /// Create a FileNotFound error.
     pub fn file_not_found(path: PathBuf) -> Self {
@@ -448,7 +442,7 @@ mod tests {
     #[test]
     fn test_file_not_found_display() {
         let err = PdfCatError::file_not_found(PathBuf::from("/tmp/missing.pdf"));
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("File not found"));
         assert!(msg.contains("missing.pdf"));
     }
@@ -456,7 +450,7 @@ mod tests {
     #[test]
     fn test_failed_to_load_pdf_display() {
         let err = PdfCatError::failed_to_load_pdf(PathBuf::from("bad.pdf"), "Invalid PDF header");
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("Failed to load PDF"));
         assert!(msg.contains("bad.pdf"));
         assert!(msg.contains("Invalid PDF header"));
@@ -465,7 +459,7 @@ mod tests {
     #[test]
     fn test_encrypted_pdf_display() {
         let err = PdfCatError::encrypted_pdf(PathBuf::from("secret.pdf"));
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("encrypted"));
         assert!(msg.contains("secret.pdf"));
         assert!(msg.contains("Decrypt")); // Helpful hint
@@ -474,7 +468,7 @@ mod tests {
     #[test]
     fn test_output_exists_display() {
         let err = PdfCatError::output_exists(PathBuf::from("existing.pdf"));
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("already exists"));
         assert!(msg.contains("existing.pdf"));
         assert!(msg.contains("--force")); // Helpful hint
@@ -487,7 +481,7 @@ mod tests {
             range: "1-100".to_string(),
             total_pages: 10,
         };
-        let msg = format!("{}", err);
+        let msg = format!("{err}");
         assert!(msg.contains("Invalid page range"));
         assert!(msg.contains("1-100"));
         assert!(msg.contains("doc.pdf"));

@@ -22,6 +22,7 @@
 //! ```
 
 use lopdf::Document;
+use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -30,7 +31,8 @@ use tokio::task;
 use crate::error::{PdfCatError, Result};
 
 /// Options for writing PDF files.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WriteOptions {
     /// Use atomic writes (write to temp file, then rename).
     pub atomic: bool,
@@ -83,6 +85,7 @@ impl WriteStatistics {
 }
 
 /// PDF writer with configurable behavior.
+#[derive(Debug, Clone)]
 pub struct PdfWriter {
     options: WriteOptions,
 }
