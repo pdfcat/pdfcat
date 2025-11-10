@@ -280,7 +280,7 @@ pub enum OverwriteMode {
 ///
 /// This structure contains all settings needed to perform a merge,
 /// derived and validated from CLI arguments.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     /// Input PDF file paths (in merge order).
