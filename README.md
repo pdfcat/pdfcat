@@ -2,7 +2,7 @@
 
 **Concatenate PDF files into a single document**.
 
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 ## Features
 
@@ -227,33 +227,6 @@ Memory usage scales linearly with document size, typically:
 - Medium PDFs (5-10MB): ~50MB RAM
 - Large PDFs (50MB+): ~200MB RAM
 
-## Architecture
-
-**pdfcat**'s core library is built with a modular architecture:
-
-```
-src/
-├── lib.rs            # Library root
-├── config.rs         # Configuration management
-├── error.rs          # Error types
-├── validation/       # Input validation
-│   └── mod.rs
-├── io/               # I/O operations
-│   ├── mod.rs
-│   ├── reader.rs     # PDF loading
-│   └── writer.rs     # PDF writing
-├── output/           # User-facing output
-│   ├── mod.rs
-│   ├── formatter.rs  # Message formatting
-│   └── progress.rs   # Progress indicators
-└── merge/            # Core merge logic
-    ├── mod.rs
-    ├── merger.rs     # Main merge algorithm
-    ├── pages.rs      # Page operations
-    ├── bookmarks.rs  # Bookmark management
-    └── metadata.rs   # Metadata handling
-```
-
 ## Testing
 
 Run the test suite:
@@ -317,12 +290,7 @@ Contributions are welcome! Please:
 
 ## License
 
-Licensed under either of:
-
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
+Licensed under [AGPL-3.0](LICENSE).
 
 ## Acknowledgments
 

@@ -8,7 +8,7 @@ edition = "2024"
 authors = ["Nelson Dominguez <ekkolon@proton.me>"]
 description = "Concatenate PDF files into a single document"
 repository = "https://github.com/pdfcat/pdfcat"
-license = "MIT OR Apache-2.0"
+license-file = "LICENSE"
 keywords = ["pdf", "merge", "cli", "concatenate"]
 categories = ["command-line-utilities"]
 
