@@ -95,7 +95,7 @@ impl PageExtractor {
             if *page_num > max_pages {
                 return Err(PdfCatError::InvalidPageRange {
                     path: std::path::PathBuf::from("document"),
-                    range: format!("{:?}", page_range),
+                    range: format!("{page_range:?}"),
                     total_pages: max_pages as usize,
                 });
             }
@@ -124,18 +124,18 @@ impl PageExtractor {
     fn update_page_tree(&self, doc: &mut Document, page_ids: &[ObjectId]) -> Result<()> {
         let catalog = doc
             .catalog_mut()
-            .map_err(|e| PdfCatError::merge_failed(format!("Failed to get catalog: {}", e)))?;
+            .map_err(|err| PdfCatError::merge_failed(format!("Failed to get catalog: {err}")))?;
 
         let pages_id = catalog
             .get(b"Pages")
             .and_then(|p| p.as_reference())
-            .map_err(|e| {
-                PdfCatError::merge_failed(format!("Failed to get pages reference: {}", e))
+            .map_err(|err| {
+                PdfCatError::merge_failed(format!("Failed to get pages reference: {err}"))
             })?;
 
-        let pages_obj = doc
-            .get_object_mut(pages_id)
-            .map_err(|e| PdfCatError::merge_failed(format!("Failed to get pages object: {}", e)))?;
+        let pages_obj = doc.get_object_mut(pages_id).map_err(|err| {
+            PdfCatError::merge_failed(format!("Failed to get pages object: {err}"))
+        })?;
 
         if let Object::Dictionary(dict) = pages_obj {
             // Replace Kids array with selected pages
@@ -183,7 +183,7 @@ impl PageExtractor {
     fn rotate_page(&self, doc: &mut Document, page_id: ObjectId, degrees: i64) -> Result<()> {
         let page_obj = doc
             .get_object_mut(page_id)
-            .map_err(|e| PdfCatError::merge_failed(format!("Failed to get page: {}", e)))?;
+            .map_err(|err| PdfCatError::merge_failed(format!("Failed to get page: {err}")))?;
 
         if let Object::Dictionary(dict) = page_obj {
             // Get existing rotation if any

@@ -85,7 +85,7 @@ fn bench_load_parallel(c: &mut Criterion) {
 
     for workers in [1, 2, 4].iter() {
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{}_workers", workers)),
+            BenchmarkId::from_parameter(format!("{workers}_workers")),
             workers,
             |b, &workers| {
                 b.to_async(&rt).iter(|| async {
@@ -178,7 +178,7 @@ fn bench_merge_compression(c: &mut Criterion) {
     .iter()
     {
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{:?}", level)),
+            BenchmarkId::from_parameter(format!("{level:?}")),
             level,
             |b, &level| {
                 b.to_async(&rt).iter(|| async {
@@ -309,7 +309,7 @@ fn bench_merge_scaling(c: &mut Criterion) {
 
     for count in [2, 5, 10, 20].iter() {
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{}_files", count)),
+            BenchmarkId::from_parameter(format!("{count}_files")),
             count,
             |b, &count| {
                 b.to_async(&rt).iter(|| async {
