@@ -1,0 +1,5 @@
+workspace = true
+publish = false  # disables crates.io publish
+push = true      # pushes commit + tag
+tag = true
+sign-tag = true  # optional
