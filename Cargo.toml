@@ -1,9 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["pdfcat", "pdfcat-cli"]
+members = ["crates/*"]
 
 [workspace.package]
-version = "0.1.0"
+version = "1.0.0-beta.1"
 edition = "2024"
 authors = ["Nelson Dominguez <ekkolon@proton.me>"]
 description = "Concatenate PDF files into a single document"
