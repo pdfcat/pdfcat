@@ -18,7 +18,7 @@ tokio.workspace = true
 serde.workspace = true
 
 futures = "0.3"
-lopdf = { version = "0.38", features = ["serde"] }
+lopdf = { version = "0.38", features = ["serde", "async"] }
 glob = "0.3"
 
 [dev-dependencies]
