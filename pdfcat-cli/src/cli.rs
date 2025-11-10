@@ -197,6 +197,7 @@ impl Cli {
     /// let cli = Cli::parse();
     /// let config = cli.to_config().expect("Invalid configuration");
     /// ```
+    #[allow(unused)]
     pub fn to_config(&self) -> Result<Config> {
         // Parse compression level
         let compression = CompressionLevel::from_str(&self.compression)
@@ -277,6 +278,7 @@ impl Cli {
     /// # Errors
     ///
     /// Returns an error if any validation checks fail.
+    #[allow(unused)]
     pub fn validate(&self) -> Result<()> {
         // Check for empty inputs (shouldn't happen with clap, but be safe)
         if self.inputs.is_empty() {
@@ -328,6 +330,7 @@ impl Cli {
     /// # Errors
     ///
     /// Returns an error if the input list file cannot be read or parsed.
+    #[allow(unused)]
     pub async fn get_all_inputs(&self) -> Result<Vec<PathBuf>> {
         let patterns: Vec<String> = self
             .inputs
