@@ -229,6 +229,14 @@ Memory usage scales linearly with document size, typically:
 
 ## Testing
 
+> 📄 **Licensing Note for Test Fixtures**
+>
+> The PDF files located within the [`pdfcat/tests/fixtures`](./pdfcat/tests/fixtures/) directory are included solely for testing and validation purposes.
+>
+> These files were sourced from various public domains or created specifically for testing structure and complexity. They belong to their respective original owners/creators.
+>
+> **Do not copy, distribute, or reuse these fixture files outside of the pdfcat project's testing context.**
+
 Run the test suite:
 
 ```bash
