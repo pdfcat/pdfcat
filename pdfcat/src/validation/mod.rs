@@ -241,7 +241,7 @@ impl Validator {
         }
 
         // Load the PDF document
-        let doc = Document::load(path).map_err(|e| {
+        let doc = Document::load(path).await.map_err(|e| {
             // Check if it's an encryption error
             let err_msg = e.to_string();
             if err_msg.contains("encrypt") || err_msg.contains("password") {

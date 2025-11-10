@@ -180,36 +180,33 @@ impl PdfReader {
         let path_buf = path.to_path_buf();
         let verify = self.verify;
 
-        // Load in a blocking task to avoid blocking the async runtime
-        let result = tokio::task::spawn_blocking(move || {
-            let start = Instant::now();
+        let start = Instant::now();
 
-            // Load the document
-            let doc = Document::load(&path_buf).map_err(|e| {
-                let err_msg = e.to_string();
-                if err_msg.contains("encrypt") || err_msg.contains("password") {
-                    PdfCatError::encrypted_pdf(path_buf.clone())
-                } else {
-                    PdfCatError::failed_to_load_pdf(path_buf.clone(), err_msg)
-                }
-            })?;
-
-            // Verify the document has pages
-            if verify {
-                let pages = doc.get_pages();
-                if pages.is_empty() {
-                    return Err(PdfCatError::corrupted_pdf(
-                        path_buf.clone(),
-                        "PDF has no pages",
-                    ));
-                }
+        // Load the document
+        let doc = Document::load(&path_buf).await.map_err(|e| {
+            let err_msg = e.to_string();
+            if err_msg.contains("encrypt") || err_msg.contains("password") {
+                PdfCatError::encrypted_pdf(path_buf.clone())
+            } else {
+                PdfCatError::failed_to_load_pdf(path_buf.clone(), err_msg)
             }
+        })?;
 
-            let load_time = start.elapsed();
-            LoadedPdf::new(doc, path_buf, load_time)
-        })
-        .await
-        .map_err(|e| PdfCatError::other(format!("Task failed: {e}")))??;
+        // Verify the document has pages
+        if verify {
+            let pages = doc.get_pages();
+            if pages.is_empty() {
+                return Err(PdfCatError::corrupted_pdf(
+                    path_buf.clone(),
+                    "PDF has no pages",
+                ));
+            }
+        }
+
+        let load_time = start.elapsed();
+
+        // Load in a blocking task to avoid blocking the async runtime
+        let result = LoadedPdf::new(doc, path_buf, load_time)?;
 
         Ok(result)
     }
