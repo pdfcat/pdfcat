@@ -21,8 +21,11 @@
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 
+use serde::{Deserialize, Serialize};
+
 /// Style of progress indicator.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ProgressStyle {
     /// Classic progress bar: [=====>    ]
     Bar,
@@ -35,6 +38,7 @@ pub enum ProgressStyle {
 }
 
 /// Progress bar for visual feedback during operations.
+#[derive(Debug, Clone)]
 pub struct ProgressBar {
     /// Total number of items.
     total: usize,

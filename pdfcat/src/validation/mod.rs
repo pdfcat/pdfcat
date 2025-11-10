@@ -24,13 +24,15 @@
 //! ```
 
 use lopdf::Document;
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 use crate::config::Config;
 use crate::error::{PdfCatError, Result};
 
 /// Result of validating a single PDF file.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ValidationResult {
     /// Path to the validated file.
     pub path: PathBuf,
@@ -114,7 +116,8 @@ impl ValidationResult {
 }
 
 /// Summary of validation results for multiple files.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ValidationSummary {
     /// Individual validation results for each file.
     pub results: Vec<ValidationResult>,

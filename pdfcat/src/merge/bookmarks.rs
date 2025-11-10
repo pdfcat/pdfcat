@@ -8,6 +8,7 @@ use lopdf::{Dictionary, Document, Object, ObjectId};
 use std::path::Path;
 
 /// Manager for PDF bookmarks (outlines).
+#[derive(Debug, Clone)]
 pub struct BookmarkManager;
 
 impl BookmarkManager {

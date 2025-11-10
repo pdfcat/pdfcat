@@ -4,6 +4,7 @@
 //! multiple PDF documents while preserving quality and structure.
 
 use lopdf::{Document, Object, ObjectId};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -15,7 +16,8 @@ use crate::merge::metadata::MetadataManager;
 use crate::merge::pages::PageExtractor;
 
 /// Statistics about a merge operation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MergeStatistics {
     /// Number of PDFs successfully merged.
     pub files_merged: usize,
@@ -47,6 +49,7 @@ impl MergeStatistics {
 }
 
 /// Result of a merge operation.
+#[derive(Debug, Clone)]
 pub struct MergeResult {
     /// The merged PDF document.
     pub document: Document,
@@ -59,6 +62,7 @@ pub struct MergeResult {
 }
 
 /// PDF merger that combines multiple documents.
+#[derive(Debug, Clone)]
 pub struct Merger {
     /// Reader for loading PDFs.
     reader: PdfReader,
@@ -129,11 +133,11 @@ impl Merger {
         for result in load_results {
             match result {
                 Ok(loaded) => loaded_pdfs.push(loaded),
-                Err(e) => {
+                Err(err) => {
                     if config.continue_on_error {
-                        eprintln!("Warning: Skipping file due to error: {}", e);
+                        eprintln!("Warning: Skipping file due to error: {err}");
                     } else {
-                        return Err(e);
+                        return Err(err);
                     }
                 }
             }
@@ -263,19 +267,19 @@ impl Merger {
         // Get the catalog and pages reference
         let catalog = merged
             .catalog_mut()
-            .map_err(|e| PdfCatError::merge_failed(format!("Failed to get catalog: {}", e)))?;
+            .map_err(|err| PdfCatError::merge_failed(format!("Failed to get catalog: {err}")))?;
 
         let pages_id = catalog
             .get(b"Pages")
             .and_then(|p| p.as_reference())
-            .map_err(|e| {
-                PdfCatError::merge_failed(format!("Failed to get pages reference: {}", e))
+            .map_err(|err| {
+                PdfCatError::merge_failed(format!("Failed to get pages reference: {err}"))
             })?;
 
         // Get the pages dictionary
-        let pages_dict = merged
-            .get_object_mut(pages_id)
-            .map_err(|e| PdfCatError::merge_failed(format!("Failed to get pages object: {}", e)))?;
+        let pages_dict = merged.get_object_mut(pages_id).map_err(|err| {
+            PdfCatError::merge_failed(format!("Failed to get pages object: {err}"))
+        })?;
 
         if let Object::Dictionary(dict) = pages_dict {
             // Get existing kids array
@@ -326,7 +330,7 @@ fn format_file_size(size: u64) -> String {
     } else if size >= KB {
         format!("{:.2} KB", size as f64 / KB as f64)
     } else {
-        format!("{} bytes", size)
+        format!("{size} bytes")
     }
 }
 

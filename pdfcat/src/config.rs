@@ -7,13 +7,14 @@
 //! - Application of defaults
 //! - Path canonicalization
 
-use anyhow::{Context, Result, bail};
+use serde::{Deserialize, Serialize};
 
-use crate::PdfCatError;
+use crate::{PdfCatError, Result};
 use std::{path::PathBuf, str::FromStr};
 
 /// Compression level for the output PDF.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum CompressionLevel {
     /// No compression - preserves exact quality and structure.
     None,
@@ -50,7 +51,8 @@ impl FromStr for CompressionLevel {
 }
 
 /// Page rotation in degrees.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Rotation {
     /// Rotate 90 degrees clockwise.
     Clockwise90,
@@ -75,7 +77,7 @@ impl Rotation {
             90 => Ok(Self::Clockwise90),
             180 => Ok(Self::Rotate180),
             270 => Ok(Self::Clockwise270),
-            _ => bail!(PdfCatError::InvalidConfig {
+            _ => Err(PdfCatError::InvalidConfig {
                 message: format!("Invalid rotation: {degrees}. Must be 90, 180, or 270"),
             }),
         }
@@ -98,12 +100,14 @@ impl Rotation {
 /// - "1-5" - range of pages (inclusive)
 /// - "1,3,5" - multiple individual pages
 /// - "1-5,10-15" - combination of ranges
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub struct PageRange {
     ranges: Vec<PageRangeItem>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 enum PageRangeItem {
     Single(u32),
     Range(u32, u32),
@@ -139,37 +143,41 @@ impl PageRange {
             if part.contains('-') {
                 let parts: Vec<&str> = part.split('-').collect();
                 if parts.len() != 2 {
-                    bail!("Invalid page range format: {part}. Expected format like '1-5'");
+                    return Err(PdfCatError::invalid_config(
+                        "Invalid page range format: {part}. Expected format like '1-5'",
+                    ));
                 }
 
-                let start: u32 = parts[0]
-                    .trim()
-                    .parse()
-                    .with_context(|| format!("Invalid page number: {}", parts[0]))?;
+                let start: u32 = parts[0].trim().parse().map_err(|_| {
+                    crate::PdfCatError::invalid_config(format!("Invalid page number: {}", parts[0]))
+                })?;
 
-                let end: u32 = parts[1]
-                    .trim()
-                    .parse()
-                    .with_context(|| format!("Invalid page number: {}", parts[1]))?;
+                let end: u32 = parts[1].trim().parse().map_err(|_| {
+                    crate::PdfCatError::invalid_config(format!("Invalid page number: {}", parts[1]))
+                })?;
 
                 if start == 0 || end == 0 {
-                    bail!("Page numbers must be positive (1-indexed)");
+                    return Err(PdfCatError::invalid_config(
+                        "Page numbers must be positive (1-indexed)",
+                    ));
                 }
 
                 if start > end {
-                    bail!(
+                    return Err(PdfCatError::invalid_config(format!(
                         "Invalid range {start}-{end}: start page must be less than or equal to end page"
-                    );
+                    )));
                 }
 
                 ranges.push(PageRangeItem::Range(start, end));
             } else {
-                let page: u32 = part
-                    .parse()
-                    .with_context(|| format!("Invalid page number: {part}"))?;
+                let page: u32 = part.parse().map_err(|_| {
+                    crate::PdfCatError::invalid_config(format!("Invalid page number: {part}"))
+                })?;
 
                 if page == 0 {
-                    bail!("Page numbers must be positive (1-indexed)");
+                    return Err(PdfCatError::invalid_config(
+                        "Page numbers must be positive (1-indexed)",
+                    ));
                 }
 
                 ranges.push(PageRangeItem::Single(page));
@@ -177,7 +185,7 @@ impl PageRange {
         }
 
         if ranges.is_empty() {
-            bail!("Page range cannot be empty");
+            return Err(PdfCatError::invalid_config("Page range cannot be empty"));
         }
 
         Ok(Self { ranges })
@@ -213,7 +221,7 @@ impl PageRange {
 }
 
 /// PDF metadata to set on the output document.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Metadata {
     /// Document title.
     pub title: Option<String>,
@@ -256,7 +264,8 @@ impl Metadata {
 }
 
 /// Output file overwrite behavior.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum OverwriteMode {
     /// Prompt the user before overwriting (default).
     #[default]
@@ -271,7 +280,8 @@ pub enum OverwriteMode {
 ///
 /// This structure contains all settings needed to perform a merge,
 /// derived and validated from CLI arguments.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
     /// Input PDF file paths (in merge order).
     pub inputs: Vec<PathBuf>,
@@ -332,26 +342,32 @@ impl Config {
     /// - Other validation rules fail
     pub fn validate(&self) -> Result<()> {
         if self.inputs.is_empty() {
-            bail!("No input files specified");
+            return Err(PdfCatError::invalid_config(
+                "No input files specified".to_string(),
+            ));
         }
 
         if self.verbose && self.quiet {
-            bail!("Cannot use both --verbose and --quiet");
+            return Err(PdfCatError::invalid_config(
+                "Cannot use both --verbose and --quiet".to_string(),
+            ));
         }
 
         if let Some(jobs) = self.jobs
             && jobs == 0
         {
-            bail!("Number of jobs must be at least 1");
+            return Err(PdfCatError::invalid_config(
+                "Number of jobs must be at least 1".to_string(),
+            ));
         }
 
         // Validate that output path is not in inputs
         for input in &self.inputs {
             if input == &self.output {
-                bail!(
+                return Err(PdfCatError::invalid_config(format!(
                     "Output file cannot be the same as an input file: {}",
                     self.output.display()
-                );
+                )));
             }
         }
 

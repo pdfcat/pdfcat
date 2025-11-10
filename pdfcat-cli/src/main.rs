@@ -21,9 +21,9 @@ async fn main() {
     let cli = Cli::parse();
 
     // Run the application and handle errors
-    if let Err(e) = run(cli).await {
-        eprintln!("Error: {}", e);
-        process::exit(e.exit_code());
+    if let Err(err) = run(cli).await {
+        eprintln!("Error: {err}");
+        process::exit(err.exit_code());
     }
 }
 
@@ -186,7 +186,7 @@ async fn handle_output_overwrite(
             let mut response = String::new();
             io::stdin()
                 .read_line(&mut response)
-                .map_err(|e| PdfCatError::other(format!("Failed to read input: {}", e)))?;
+                .map_err(|err| PdfCatError::other(format!("Failed to read input: {err}")))?;
 
             let response = response.trim().to_lowercase();
             if response == "y" || response == "yes" {

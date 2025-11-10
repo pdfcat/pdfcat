@@ -5,7 +5,7 @@
 //! These benchmarks measure the performance of core operations
 //! using criterion for statistical analysis.
 
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use pdfcat::config::{CompressionLevel, Config, Metadata, OverwriteMode};
 use pdfcat::io::{PdfReader, PdfWriter};
 use pdfcat::merge::merge_pdfs;
@@ -35,7 +35,7 @@ fn bench_load_single_pdf(c: &mut Criterion) {
 
     c.bench_function("load_single_pdf", |b| {
         b.to_async(&rt).iter(|| async {
-            let result = reader.load(black_box(&path)).await;
+            let result = reader.load(std::hint::black_box(&path)).await;
             assert!(result.is_ok());
             result.unwrap()
         });
@@ -59,7 +59,7 @@ fn bench_load_sequential(c: &mut Criterion) {
 
     c.bench_function("load_sequential_3_files", |b| {
         b.to_async(&rt).iter(|| async {
-            let results = reader.load_sequential(black_box(&paths)).await;
+            let results = reader.load_sequential(std::hint::black_box(&paths)).await;
             assert_eq!(results.len(), 3);
         });
     });
@@ -85,11 +85,13 @@ fn bench_load_parallel(c: &mut Criterion) {
 
     for workers in [1, 2, 4].iter() {
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{}_workers", workers)),
+            BenchmarkId::from_parameter(format!("{workers}_workers")),
             workers,
             |b, &workers| {
                 b.to_async(&rt).iter(|| async {
-                    let results = reader.load_parallel(black_box(&paths), workers).await;
+                    let results = reader
+                        .load_parallel(std::hint::black_box(&paths), workers)
+                        .await;
                     assert_eq!(results.len(), 4);
                 });
             },
@@ -112,7 +114,7 @@ fn bench_validate_pdf(c: &mut Criterion) {
 
     c.bench_function("validate_pdf", |b| {
         b.to_async(&rt).iter(|| async {
-            let result = validator.validate_file(black_box(&path)).await;
+            let result = validator.validate_file(std::hint::black_box(&path)).await;
             assert!(result.is_ok());
         });
     });
@@ -151,7 +153,7 @@ fn bench_merge_two_pdfs(c: &mut Criterion) {
                 rotation: None,
             };
 
-            let result = merge_pdfs(black_box(&config)).await;
+            let result = merge_pdfs(std::hint::black_box(&config)).await;
             assert!(result.is_ok());
         });
     });
@@ -178,7 +180,7 @@ fn bench_merge_compression(c: &mut Criterion) {
     .iter()
     {
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{:?}", level)),
+            BenchmarkId::from_parameter(format!("{level:?}")),
             level,
             |b, &level| {
                 b.to_async(&rt).iter(|| async {
@@ -202,7 +204,7 @@ fn bench_merge_compression(c: &mut Criterion) {
                         rotation: None,
                     };
 
-                    let result = merge_pdfs(black_box(&config)).await;
+                    let result = merge_pdfs(std::hint::black_box(&config)).await;
                     assert!(result.is_ok());
                 });
             },
@@ -245,7 +247,7 @@ fn bench_merge_with_bookmarks(c: &mut Criterion) {
                 rotation: None,
             };
 
-            let result = merge_pdfs(black_box(&config)).await;
+            let result = merge_pdfs(std::hint::black_box(&config)).await;
             assert!(result.is_ok());
         });
     });
@@ -274,7 +276,7 @@ fn bench_write_pdf(c: &mut Criterion) {
                 .path()
                 .join(format!("out_{}.pdf", rand::random::<u32>()));
             let writer = PdfWriter::new();
-            let result = writer.save(black_box(&doc), &output).await;
+            let result = writer.save(std::hint::black_box(&doc), &output).await;
             assert!(result.is_ok());
         });
     });
@@ -286,7 +288,7 @@ fn bench_write_pdf(c: &mut Criterion) {
                 .path()
                 .join(format!("out_{}.pdf", rand::random::<u32>()));
             let writer = PdfWriter::non_atomic();
-            let result = writer.save(black_box(&doc), &output).await;
+            let result = writer.save(std::hint::black_box(&doc), &output).await;
             assert!(result.is_ok());
         });
     });
@@ -309,7 +311,7 @@ fn bench_merge_scaling(c: &mut Criterion) {
 
     for count in [2, 5, 10, 20].iter() {
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{}_files", count)),
+            BenchmarkId::from_parameter(format!("{count}_files")),
             count,
             |b, &count| {
                 b.to_async(&rt).iter(|| async {
@@ -334,7 +336,7 @@ fn bench_merge_scaling(c: &mut Criterion) {
                         rotation: None,
                     };
 
-                    let result = merge_pdfs(black_box(&config)).await;
+                    let result = merge_pdfs(std::hint::black_box(&config)).await;
                     assert!(result.is_ok());
                 });
             },

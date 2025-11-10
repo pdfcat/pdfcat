@@ -33,6 +33,7 @@ pub enum MessageLevel {
 }
 
 /// Output formatter with configurable verbosity.
+#[derive(Debug, Clone)]
 pub struct OutputFormatter {
     /// Whether to suppress non-error output.
     quiet: bool,
