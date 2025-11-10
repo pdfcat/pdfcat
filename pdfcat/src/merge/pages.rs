@@ -45,6 +45,7 @@ impl PageRotation {
 }
 
 /// Page extractor for manipulating pages in PDFs.
+#[derive(Debug, Clone)]
 pub struct PageExtractor;
 
 impl PageExtractor {

@@ -4,6 +4,7 @@
 //! multiple PDF documents while preserving quality and structure.
 
 use lopdf::{Document, Object, ObjectId};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -15,7 +16,8 @@ use crate::merge::metadata::MetadataManager;
 use crate::merge::pages::PageExtractor;
 
 /// Statistics about a merge operation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MergeStatistics {
     /// Number of PDFs successfully merged.
     pub files_merged: usize,
@@ -47,6 +49,7 @@ impl MergeStatistics {
 }
 
 /// Result of a merge operation.
+#[derive(Debug, Clone)]
 pub struct MergeResult {
     /// The merged PDF document.
     pub document: Document,
@@ -59,6 +62,7 @@ pub struct MergeResult {
 }
 
 /// PDF merger that combines multiple documents.
+#[derive(Debug, Clone)]
 pub struct Merger {
     /// Reader for loading PDFs.
     reader: PdfReader,

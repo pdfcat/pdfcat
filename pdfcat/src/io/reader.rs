@@ -133,6 +133,7 @@ impl LoadStatistics {
 }
 
 /// PDF reader with configurable loading behavior.
+#[derive(Debug, Clone)]
 pub struct PdfReader {
     /// Whether to verify PDF structure after loading.
     verify: bool,

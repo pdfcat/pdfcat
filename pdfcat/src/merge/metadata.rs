@@ -11,6 +11,7 @@ use lopdf::{Dictionary, Document, Object};
 use std::time::SystemTime;
 
 /// Manager for PDF metadata.
+#[derive(Debug, Clone)]
 pub struct MetadataManager;
 
 impl MetadataManager {

@@ -320,12 +320,6 @@ impl From<lopdf::Error> for PdfCatError {
     }
 }
 
-impl From<anyhow::Error> for PdfCatError {
-    fn from(err: anyhow::Error) -> Self {
-        Self::other(err.to_string())
-    }
-}
-
 impl PdfCatError {
     /// Create a FileNotFound error.
     pub fn file_not_found(path: PathBuf) -> Self {
