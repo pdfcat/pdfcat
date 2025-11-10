@@ -342,23 +342,23 @@ impl Config {
     /// - Other validation rules fail
     pub fn validate(&self) -> Result<()> {
         if self.inputs.is_empty() {
-            return Err(PdfCatError::invalid_config(format!(
-                "No input files specified"
-            )));
+            return Err(PdfCatError::invalid_config(
+                "No input files specified".to_string(),
+            ));
         }
 
         if self.verbose && self.quiet {
-            return Err(PdfCatError::invalid_config(format!(
-                "Cannot use both --verbose and --quiet"
-            )));
+            return Err(PdfCatError::invalid_config(
+                "Cannot use both --verbose and --quiet".to_string(),
+            ));
         }
 
         if let Some(jobs) = self.jobs
             && jobs == 0
         {
-            return Err(PdfCatError::invalid_config(format!(
-                "Number of jobs must be at least 1"
-            )));
+            return Err(PdfCatError::invalid_config(
+                "Number of jobs must be at least 1".to_string(),
+            ));
         }
 
         // Validate that output path is not in inputs
