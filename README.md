@@ -1,40 +1,33 @@
 # pdfcat
 
-**Concatenate PDF files into a single document**.
+`pdfcat` is a high-performance _command line utilitiy_ to **merge PDF files into a single document without losing quality**.
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
 ## Features
 
-✨ **High Quality**
+✨ **Zero Quality Loss**
 
-- Direct PDF object copying (no re-rendering)
+- Direct PDF object copying (no re-rendering).
 - Preserves images, fonts, annotations, and form fields
-- No quality loss
 
-📋 **Comprehensive Functionality**
+📋 **Full Control**
 
-- Merge multiple PDFs while preserving order
-- Extract specific page ranges
-- Rotate pages (90°, 180°, 270°)
-- Add bookmarks for navigation
+- Extract ranges, rotate pages, add bookmarks.
 - Set custom metadata (title, author, subject, keywords)
 - Configurable compression (none, standard, maximum)
 
-🚀 **Performance**
+🚀 **High Performance**
 
-- Parallel PDF loading
-- Efficient memory usage
+- Parallel PDF loading with efficient memory usage
 - Optimized for large files
 
-🛡️ **Robust**
-
-- Comprehensive error handling
-- Continue-on-error mode
-- Input validation
-- Dry-run capability
-
 ## Installation
+
+**pdfcat** currently supports the following architectures:
+
+- **x86_64** (64-bit Intel/AMD processors)
+- **aarch64** (64-bit ARM processors)
 
 ### From Source
 
@@ -49,6 +42,40 @@ sudo cp target/release/pdfcat /usr/local/bin/
 
 ```bash
 cargo install pdfcat
+```
+
+### Linux (Debian)
+
+> For more details see [installation script](/scripts/install.sh).
+
+Run the following command and follow the on-screen instructions:
+
+```shell
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/pdfcat/pdfcat/main/scripts/install.sh)"
+```
+
+This script will:
+
+- Automatically detect your machine's architecture
+- Download and unpack the necessary .tar
+- Copy the `pdfcat` binary to `usr/local/bin`
+
+For more details, you can review the [installation script](/scripts/install.sh) directly.
+
+### Windows 11 (PowerShell)
+
+> For more details see [installation script](/scripts/install.ps1).
+
+Ensure your PowerShell execution policy allows (remote) script execution:
+
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Executing the following script will walk you through the installation process (you may need to run this command from an elevated shell):
+
+```powershell
+Invoke-Expression -Command (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/pdfcat/pdfcat/main/scripts/install.ps1" -UseBasicParsing).Content
 ```
 
 ## Quick Start
@@ -210,28 +237,11 @@ Merge from list:
 pdfcat --input-list files.txt -o combined.pdf
 ```
 
-## Performance
-
-Benchmarks on a typical laptop (Intel i7, 16GB RAM):
-
-| Operation               | Files | Total Pages | Time  |
-| ----------------------- | ----- | ----------- | ----- |
-| Basic merge             | 10    | 500         | ~2s   |
-| With bookmarks          | 10    | 500         | ~2.5s |
-| Parallel load (4 cores) | 50    | 2,500       | ~8s   |
-| Maximum compression     | 10    | 500         | ~4s   |
-
-Memory usage scales linearly with document size, typically:
-
-- Small PDFs (< 1MB): ~10MB RAM
-- Medium PDFs (5-10MB): ~50MB RAM
-- Large PDFs (50MB+): ~200MB RAM
-
 ## Testing
 
 > 📄 **Licensing Note for Test Fixtures**
 >
-> The PDF files located within the [`pdfcat/tests/fixtures`](./pdfcat/tests/fixtures/) directory are included solely for testing and validation purposes.
+> The PDF files located within the [`pdfcat/tests/fixtures`](./crates/pdfcat/tests/fixtures/) directory are included solely for testing and validation purposes.
 >
 > These files were sourced from various public domains or created specifically for testing structure and complexity. They belong to their respective original owners/creators.
 >
@@ -308,12 +318,7 @@ Built with:
 - [lopdf](https://github.com/J-F-Liu/lopdf) - PDF manipulation
 - [tokio](https://github.com/tokio-rs/tokio) - Async runtime
 
-## Roadmap
-
-...TBD
-
 ## Support
 
 - 📖 [Documentation](https://docs.rs/pdfcat)
 - 🐛 [Issue Tracker](https://github.com/pdfcat/pdfcat/issues)
-- 💬 [Discussions](https://github.com/pdfcat/pdfcat/discussions)
