@@ -30,7 +30,7 @@ tempfile = "3.23"
 
 [build-dependencies]
 tokio.workspace = true
-pdfcat = { path = "../pdfcat" }
+pdfcat = { path = "../pdfcat", version = "1.0.0-beta.6" }
 clap = { version = "4", features = ["derive"] }
 clap_mangen = "0.2"
 
