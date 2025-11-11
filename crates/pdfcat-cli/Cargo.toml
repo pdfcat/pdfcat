@@ -9,13 +9,14 @@ license-file.workspace = true
 keywords.workspace = true
 categories.workspace = true
 build = "build.rs"
+include = ["src/**/*.rs", "../../README.md", "../../LICENSE"]
 
 [[bin]]
 name = "pdfcat"
 path = "src/main.rs"
 
 [dependencies]
-pdfcat = { path = "../pdfcat" }
+pdfcat = { path = "../pdfcat", version = "1.0.0-beta.4" }
 tokio.workspace = true
 
 [dependencies.clap]
