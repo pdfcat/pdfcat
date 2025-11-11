@@ -32,3 +32,8 @@ tokio.workspace = true
 pdfcat = { path = "../pdfcat" }
 clap = { version = "4", features = ["derive"] }
 clap_mangen = "0.2"
+
+[package.metadata.release]
+publish = false # disables crates.io publish
+tag = true      # enable git tagging
+tag-prefix = "" # remove default "pdfcat-cli-" prefix
