@@ -48,8 +48,6 @@ cargo install pdfcat
 
 > For more details see [installation script](/scripts/install.sh).
 
-Run the following command and follow the on-screen instructions:
-
 ```shell
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/pdfcat/pdfcat/main/scripts/install.sh)"
 ```
@@ -59,8 +57,6 @@ This script will:
 - Automatically detect your machine's architecture
 - Download and unpack the necessary .tar
 - Copy the `pdfcat` binary to `usr/local/bin`
-
-For more details, you can review the [installation script](/scripts/install.sh) directly.
 
 ### Windows 11 (PowerShell)
 
