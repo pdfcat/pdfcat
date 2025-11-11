@@ -20,11 +20,11 @@ function Write-Log {
     $color = $fc
 
     switch ($Level.ToUpper()) {
-        'INFO' { $prefix = "    [INFO] "; $color = "Cyan" }
-        'OK' { $prefix = "      [OK] "; $color = "Green" }
-        'WARN' { $prefix = "    [WARN] "; $color = "Yellow" }
-        'ERROR' { $prefix = "   [ERROR] "; $color = "Red" }
-        'DEBUG' { $prefix = "   [DEBUG] "; $color = "DarkGray" }
+        'INFO' { $prefix = "   `e[34m●`e[0m "; $color = "Cyan" }
+        'OK' { $prefix = "   `e[32m●`e[0m "; $color = "Green" }
+        'WARN' { $prefix = "   `e[33m●`e[0m "; $color = "Yellow" }
+        'ERROR' { $prefix = "   `e[31m●`e[0m "; $color = "Red" }
+        'DEBUG' { $prefix = "   `e[90m●`e[0m "; $color = "DarkGray" }
         'HEADER' { $prefix = ""; $color = "Blue" } # For "Installing..."
         'BANNER' { $prefix = ""; $color = "Magenta" }
         'TITLE' { $prefix = ""; $color = "Cyan" }    # For section titles
@@ -33,6 +33,7 @@ function Write-Log {
         'EMPTY' { $prefix = ""; $color = $fc }       # For Write-Output ""
         default { $prefix = "        "; $color = $fc } # Default indentation for plain text
     }
+
 
     $host.UI.RawUI.ForegroundColor = $color
     
@@ -144,6 +145,36 @@ function Install-FromSource {
     Write-Log -Level OK -Message "✓ Build successful"
 }
 
+function Get-Platform {
+    # OS
+    $os =
+    if ($IsWindows) { "windows" }
+    elseif ($IsLinux) { "linux" }
+    elseif ($IsMacOS) { "darwin" }
+    else {
+        Write-Log -Level ERROR -Message "Unsupported OS detected."
+        exit 1 
+    }
+
+    # Arch
+    $arch =
+    if (-not [System.Environment]::Is64BitOperatingSystem) {
+        Write-Log -Level ERROR -Message "32-bit OS not supported."
+        exit 1
+    }
+    elseif ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
+        "aarch64"
+    }
+    else {
+        "x86_64"
+    }
+
+    [PSCustomObject]@{
+        OS   = $os
+        Arch = $arch
+    }
+}
+
 function Get-Binary {
     <#
 .SYNOPSIS
@@ -178,22 +209,13 @@ Get-Binary -OutputDir 'C:\Tools' -Owner 'mycompany' -Repo 'tool-name'
         [string]$OutputDir = "$PWD"
     )
 
-    Write-Log -Level HEADER -Message "📥 Downloading artificats from $Owner/$Repo (latest release)..."
+    Write-Log -Level HEADER -Message "📥 Downloading latest artificats from https://github.com/$Owner/$Repo"
 
     # --- 1. Determine OS and architecture ---
-    $OS = if ($IsWindows) { "windows" } elseif ($IsLinux) { "linux" } elseif ($IsMacOS) { "darwin" } else {
-        Write-Log -Level ERROR -Message "Unsupported OS detected."
-        exit 1
-    }
+    $platform = Get-Platform
+    $OS = $platform.OS
+    $Arch = $platform.Arch
 
-    $Arch = if ([System.Environment]::Is64BitOperatingSystem) {
-        # Check for AMD64 (common x64 term) or fallback to aarch64 if not.
-        if ($env:PROCESSOR_ARCHITECTURE -eq "AMD64" -or $env:PROCESSOR_ARCHITEW6432 -eq "AMD64") { "x86_64" } else { "aarch64" }
-    }
-    else {
-        Write-Log -Level ERROR -Message "32-bit OS not supported."
-        exit 1
-    }
 
     # Write-Log -Level INFO -Message "Platform detected: $OS/$Arch"
 
@@ -238,7 +260,7 @@ Get-Binary -OutputDir 'C:\Tools' -Owner 'mycompany' -Repo 'tool-name'
     }
 
     $tag = $release.tag_name
-    Write-Log -Level INFO -Message "Latest release found: $tag"
+    Write-Log -Level INFO -Message "Using release tag $tag"
 
     # --- 6. Find the correct asset ---
     $asset = $release.assets | Where-Object { $_.name -like $assetPattern } | Select-Object -First 1
@@ -264,15 +286,47 @@ Get-Binary -OutputDir 'C:\Tools' -Owner 'mycompany' -Repo 'tool-name'
         $downloadHeaders["Authorization"] = "token $token"
     }
 
+    # --- 6b. Download SHA256SUMS ---
+    $shaAsset = $release.assets | Where-Object { $_.name -eq "SHA256SUMS" } | Select-Object -First 1
+    if (-not $shaAsset) { Write-Log -Level ERROR -Message "SHA256SUMS not found in release."; exit 1 }
+
+    $shaPath = Join-Path $tmpDir "SHA256SUMS"
+
+    try {
+        Invoke-WebRequest -Uri $shaAsset.url -Headers $downloadHeaders -OutFile $shaPath
+    }
+    catch {
+        Write-Log -Level ERROR -Message "Failed to download SHA256SUMS: $($_.Exception.Message)"
+        exit 1
+    }
+
     try {
         Invoke-WebRequest -Uri $assetUrl -Headers $downloadHeaders -OutFile $archivePath
-        Write-Log -Level OK -Message "Archive downloaded to $archivePath"
+        Write-Log -Level OK -Message "Downloaded archive to $archivePath"
     }
     catch {
         Write-Log -Level ERROR -Message "Download failed: $($_.Exception.Message)"
         Remove-Item $tmpDir -Recurse -Force
         exit 1
     }
+
+    # --- Verify checksum ---
+    $expected = Select-String -Path $shaPath -Pattern $asset.name |
+    ForEach-Object { $_.Line.Split()[0].ToLower() }
+
+    if (-not $expected) {
+        Write-Log -Level ERROR -Message "No hash entry found in SHA256SUMS for $($asset.name)"
+        exit 1
+    }
+
+    $actual = (Get-FileHash -Algorithm SHA256 $archivePath).Hash.ToLower()
+
+    if ($actual -ne $expected) {
+        Write-Log -Level ERROR -Message "Checksum mismatch. Expected: $expected, Actual: $actual"
+        exit 1
+    }
+
+    Write-Log -Level OK -Message "Successfully verified checksum: $($actual)"
 
     # --- 9. Extraction ---
     try {
@@ -296,7 +350,7 @@ Get-Binary -OutputDir 'C:\Tools' -Owner 'mycompany' -Repo 'tool-name'
     $finalBinary = Get-ChildItem -Path $tmpDir -Filter $BinaryName -Recurse | Select-Object -First 1
 
     if (-not $finalBinary) {
-        Write-Log -Level ERROR -Message "✗ Binary '$BinaryName' not found in the extracted archive. Check release structure."
+        Write-Log -Level ERROR -Message "Binary '$BinaryName' not found in the extracted archive. Check release structure."
         Remove-Item $tmpDir -Recurse -Force
         exit 1
     }
@@ -313,7 +367,7 @@ Get-Binary -OutputDir 'C:\Tools' -Owner 'mycompany' -Repo 'tool-name'
     # Clean up temp directory
     Remove-Item $tmpDir -Recurse -Force | Out-Null
 
-    Write-Log -Level OK -Message "Binary unpacked to: $finalOutputPath"
+    Write-Log -Level OK -Message "Unpacked archive to $finalOutputPath"
 
     return $finalOutputPath
 }
@@ -357,7 +411,7 @@ function Install-Binary {
         $script:InstalledPath = $installPath
     }
     
-    Write-Log -Level OK -Message "Installed pdfcat to: $installPath"
+    Write-Log -Level OK -Message "Copied artificats to installation directory"
 }
 
 function Test-InPath {
@@ -370,13 +424,10 @@ function Test-InPath {
     $pathDirs = $env:Path -split ';'
     
     if ($pathDirs -contains $installDir) {
-        Write-Log -Level OK -Message "Installation directory is in PATH"
-        # return $true
+        Write-Log -Level WARN -Message "Skipped updating environment variable. pdfcat already in PATH"
     }
     else {
-        Write-Log -Level WARN -Message "pdfcat installation directory is not in PATH"
-        # Write-Log -Level EMPTY -Message ""
-        # Write-Log -Level INFO -Message "Adding pdfcat directory to PATH (current user)"
+        Write-Log -Level INFO -Message "Adding pdfcat installation directory to PATH environment variable"
         
         # Add to user PATH
         $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -393,28 +444,29 @@ function Test-InPath {
 }
 
 function Test-Installation {
-    Write-Log -Level HEADER -Message "🔍 Verifying installation"
+    # Write-Log -Level HEADER -Message "🔍 Verifying installation"
     
     if (Test-Path $script:InstalledPath) {
-        Write-Log -Level OK -Message "✓ Binary exists"
+        # Write-Log -Level OK -Message "pdfcat bin directory set in PATH environment variable"
         
         try {
             $version = & $script:InstalledPath --version
-            Write-Log -Level OK -Message "✓ $version"
+            Write-Log -Level SUCCESS -Message "✓ Successfully installed $($version)"
         }
         catch {
-            Write-Log -Level WARN -Message "⚠ Binary installed but version check failed"
+            Write-Log -Level WARN -Message "pdfcat binary installed but version check failed"
         }
+
     }
     else {
-        Write-Log -Level ERROR -Message "✗ Binary not found at expected location"
+        Write-Log -Level ERROR -Message "pdfcat binary not found at expected location"
         exit 1
     }
 }
 
-function Write-Success {
-    Write-Log -Level EMPTY -Message ""
-    Write-Log -Level SUCCESS -Message "✓ Successfully installed pdfcat"
+function Write-Footer {
+    # Write-Log -Level EMPTY -Message ""
+    # Write-Log -Level SUCCESS -Message "✓ Successfully installed pdfcat"
     Write-Log -Level EMPTY -Message ""
     
     $devMode = Test-DevMode
@@ -424,18 +476,19 @@ function Write-Success {
         Write-Log -Level HELP -Message "Or:  .\target\release\pdfcat.exe --help"
     }
     else {
-        Write-Log -Level TITLE -Message "Get started:"
+        Write-Log -Level HEADER -Message "🚀 Get started"
         Write-Log -Level HELP -Message "pdfcat --help       Show help"
         Write-Log -Level HELP -Message "pdfcat --version    Show version"
         Write-Log -Level EMPTY -Message ""
-        Write-Log -Level TITLE -Message "Example usage:"
+        Write-Log -Level HEADER -Message "📌 Example usage"
         Write-Log -Level HELP -Message "pdfcat file1.pdf file2.pdf -o merged.pdf"
         Write-Log -Level HELP -Message "pdfcat *.pdf -o combined.pdf --bookmarks"
     }
     
     Write-Log -Level EMPTY -Message ""
-    Write-Log -Level TITLE -Message "Documentation: $RepoUrl"
-    Write-Log -Level TITLE -Message "Report issues: $RepoUrl/issues"
+    Write-Log -Level HEADER -Message "🔗 Links"
+    Write-Log -Level TITLE -Message "   Documentation: $RepoUrl"
+    Write-Log -Level TITLE -Message "   Report issues: $RepoUrl/issues"
     Write-Log -Level EMPTY -Message ""
 }
 
@@ -452,15 +505,22 @@ function Write-Error {
     Write-Log -Level EMPTY -Message ""
 }
 
+function Write-Header {
+    Write-Log -Level EMPTY -Message ""
+    $titleMarkdown = "**pdfcat CLI**"
+    $title = ($titleMarkdown | ConvertFrom-Markdown -AsVT100EncodedString).VT100EncodedString;
+    $platform = Get-Platform
+    Write-Log -Level TITLE -Message "You are about to install $title"
+    Write-Log -Level HELP -Message "OS  : $($platform.OS)"        
+    Write-Log -Level HELP -Message "Arch: $($platform.Arch)"   
+    
+}
+
 # Main installation flow
 function Main {
     try {
-        # Write-Banner
-        $titleMarkdown = "**pdfcat CLI**"
-        $title = ($titleMarkdown | ConvertFrom-Markdown -AsVT100EncodedString).VT100EncodedString;
-        Write-Log -Level BANNER -Message "Installing $title"        
-        $platform = Get-Platform
-        Write-Log -Level HELP -Message "You are about to install pdfcat CLI on $platform platform"        
+        # --- 1. Header
+        Write-Header      
         
         $devMode = Test-DevMode
         if ($devMode) {
@@ -507,7 +567,7 @@ function Main {
         Write-Log -Level EMPTY -Message ""
         
         Test-Installation
-        Write-Success
+        Write-Footer
 
         
     }
