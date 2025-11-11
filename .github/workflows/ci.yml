@@ -4,20 +4,30 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "scripts/**"
+      - ".vscode/**"
+      - "**/LICENSE"
+      - "**/*.md"
   pull_request:
+    paths-ignore:
+      - "scripts/**"
+      - ".vscode/**"
+      - "**/LICENSE"
+      - "**/*.md"
 
 permissions:
   contents: read
 
 jobs:
-  build-and-test:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
+      - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
@@ -31,8 +41,36 @@ jobs:
       - name: Run Clippy linter
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Build library
+  build:
+    name: Build
+    needs: [lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build workspace
         run: cargo build --workspace --all-targets --all-features --release
+
+  test:
+    name: Test
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Run tests
         env:
