@@ -31,3 +31,7 @@ rand = "0.9"
 [[bench]]
 name = "merge_bench"
 harness = false
+
+[package.metadata.release]
+publish = false # disables crates.io publish
+tag = false     # disable git tagging
