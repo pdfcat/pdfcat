@@ -1,6 +1,6 @@
 [package]
 name = "pdfcat"
-version.workspace = true
+version = "1.0.0-beta.5"
 edition.workspace = true
 authors.workspace = true
 description.workspace = true
