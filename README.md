@@ -1,8 +1,16 @@
 # pdfcat
 
-`pdfcat` is a high-performance _command line utilitiy_ to **merge PDF files into a single document without losing quality**.
-
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+
+`pdfcat` is a high-performance _command line utilitiy_ to **merge PDF files into a single document** without losing quality.
+
+**You may be looking for**:
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Examples](#examples)
+- [Library](#library-usage)
 
 ## Features
 
