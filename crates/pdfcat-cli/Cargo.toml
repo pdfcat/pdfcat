@@ -16,7 +16,7 @@ name = "pdfcat"
 path = "src/main.rs"
 
 [dependencies]
-pdfcat = { path = "../pdfcat", version = "1.0.0-beta.5" }
+pdfcat = { path = "../pdfcat", version = "1.0.0-beta.6" }
 tokio.workspace = true
 
 [dependencies.clap]
