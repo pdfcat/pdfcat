@@ -1,7 +1,6 @@
-workspace = true
 publish = false                                                                   # disables crates.io publish
 push = true                                                                       # pushes commit + tag
 tag = true
 sign-tag = true                                                                   # optional
-tag-message = "chore: release {{crate_name}} version {{version}}"
-pre-release-commit-message = "chore: release {{crate_name}} version {{version}}"
+tag-message = "chore: release version {{version}}"
+pre-release-commit-message = "chore: release version {{version}}"
