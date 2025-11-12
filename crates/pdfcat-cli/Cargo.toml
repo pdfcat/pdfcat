@@ -9,7 +9,7 @@ license-file.workspace = true
 keywords.workspace = true
 categories.workspace = true
 build = "build.rs"
-include = ["src/**/*.rs", "../../README.md", "../../LICENSE"]
+include = ["src/**/*.rs", "README.md", "LICENSE"]
 
 [[bin]]
 name = "pdfcat"
