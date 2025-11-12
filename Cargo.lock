@@ -852,7 +852,7 @@ checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
 
 [[package]]
 name = "pdfcat"
-version = "1.0.0-beta.8"
+version = "1.0.0-beta.9"
 dependencies = [
  "criterion",
  "futures",
@@ -867,7 +867,7 @@ dependencies = [
 
 [[package]]
 name = "pdfcat-cli"
-version = "1.0.0-beta.8"
+version = "1.0.0-beta.9"
 dependencies = [
  "clap",
  "clap_mangen",
