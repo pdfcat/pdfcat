@@ -1,6 +1,6 @@
 //! Utilities for path collection, PDF merge helpers, etc.
 
-use crate::{Result, error::PdfCatError};
+use crate::Result;
 use lopdf::{Document, Object};
 use std::path::PathBuf;
 
@@ -14,7 +14,7 @@ use std::path::PathBuf;
 /// Errors:
 /// - Propagates `glob` parse errors.
 /// - Propagates filesystem errors from glob iterator.
-pub fn collect_paths_for_patterns<T>(patterns: T) -> Result<Vec<PathBuf>>
+pub fn collect_paths_for_patterns<T>(patterns: T) -> Result<Vec<PathResult>>
 where
     T: IntoIterator,
     T::Item: AsRef<str>,
@@ -29,26 +29,54 @@ where
     Ok(resolved_paths)
 }
 
+/// Result of attempting to resolve a single path from a glob pattern.
+#[derive(Debug)]
+pub enum PathResult {
+    /// Successfully resolved path from glob pattern or literal path lookup.
+    Found(PathBuf),
+    /// Error encountered during glob expansion (e.g., permission denied, broken symlink, invalid pattern).
+    Error(String),
+}
+
 /// Expand a single glob pattern into filesystem paths.
 ///
 /// Pattern examples:
 /// - `"**/*.pdf"`
 /// - `"./docs/*.pdf"`
-fn collect_paths_for_pattern<P: AsRef<str>>(pattern: P) -> Result<Vec<PathBuf>> {
-    let mut resolved_paths = Vec::new();
+pub fn collect_paths_for_pattern<P: AsRef<str>>(pattern: P) -> Result<Vec<PathResult>> {
+    let pattern_str = pattern.as_ref();
+    let mut results = Vec::new();
 
-    let paths = glob::glob(pattern.as_ref()).map_err(|err| PdfCatError::Other {
-        message: err.to_string(),
-    })?;
-
-    for entry in paths {
-        let path = entry.map_err(|err| PdfCatError::Other {
-            message: err.to_string(),
-        })?;
-        resolved_paths.push(path);
+    match glob::glob(pattern_str) {
+        Ok(entries) => {
+            for entry in entries {
+                results.push(match entry {
+                    Ok(path) => PathResult::Found(path),
+                    Err(e) => PathResult::Error(e.to_string()),
+                });
+            }
+        }
+        Err(e) => results.push(PathResult::Error(e.to_string())),
     }
 
-    Ok(resolved_paths)
+    // If we found at least one path, return all results (successes + errors)
+    if results.iter().any(|r| matches!(r, PathResult::Found(_))) {
+        return Ok(results);
+    }
+
+    // Try as literal path
+    let literal_path = PathBuf::from(pattern_str);
+    if literal_path.exists() {
+        return Ok(vec![PathResult::Found(literal_path)]);
+    }
+
+    // Nothing worked, return errors
+    if !results.is_empty() {
+        return Ok(results);
+    }
+
+    // Empty result
+    Ok(vec![])
 }
 
 /// Copy object references from one PDF document to another.

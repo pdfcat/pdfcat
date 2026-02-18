@@ -17,19 +17,19 @@ path = "src/main.rs"
 
 [dependencies]
 pdfcat = { path = "../pdfcat", version = "1.0.0-beta.9" }
-tokio.workspace = true
+tokio = { workspace = true, features = ["io-std"] }
 
 [dependencies.clap]
 version = "4.5"
 features = ["derive", "wrap_help", "string", "env", "cargo"]
 
 [dev-dependencies]
-tokio.workspace = true
+tokio = { workspace = true, features = ["io-std"] }
 rstest = "0.26"
 tempfile = "3.23"
 
 [build-dependencies]
-tokio.workspace = true
+tokio = { workspace = true, features = ["io-std"] }
 pdfcat = { path = "../pdfcat", version = "1.0.0-beta.9" }
 clap = { version = "4", features = ["derive"] }
 clap_mangen = "0.2"

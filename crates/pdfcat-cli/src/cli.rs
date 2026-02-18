@@ -16,6 +16,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 use std::str::FromStr;
+use tokio::io::{AsyncBufRead, AsyncBufReadExt, BufReader};
 
 use pdfcat::config::{CompressionLevel, Config, Metadata, OverwriteMode, PageRange, Rotation};
 use pdfcat::error::{PdfCatError, Result};
@@ -40,7 +41,7 @@ pub struct Cli {
     /// Examples:
     ///   pdfcat file1.pdf file2.pdf -o output.pdf
     ///   pdfcat chapter*.pdf -o book.pdf
-    #[arg(required = true, value_name = "FILE")]
+    #[arg(required_unless_present = "input_list", value_name = "FILE")]
     pub inputs: Vec<PathBuf>,
 
     /// Output PDF file path
@@ -140,7 +141,7 @@ pub struct Cli {
     ///
     /// Example:
     ///   pdfcat --input-list files.txt -o output.pdf
-    #[arg(long, value_name = "FILE")]
+    #[arg(short, long, value_name = "FILE")]
     pub input_list: Option<PathBuf>,
 
     /// Number of parallel jobs for loading PDFs
@@ -260,11 +261,6 @@ impl Cli {
             rotation,
         };
 
-        // Validate the configuration
-        config.validate().map_err(|e| {
-            PdfCatError::invalid_config(format!("Configuration validation failed: {e}"))
-        })?;
-
         Ok(config)
     }
 
@@ -281,7 +277,7 @@ impl Cli {
     #[allow(unused)]
     pub fn validate(&self) -> Result<()> {
         // Check for empty inputs (shouldn't happen with clap, but be safe)
-        if self.inputs.is_empty() {
+        if self.inputs.is_empty() && self.input_list.is_none() {
             return Err(PdfCatError::invalid_config("No input files specified"));
         }
 
@@ -332,13 +328,22 @@ impl Cli {
     /// Returns an error if the input list file cannot be read or parsed.
     #[allow(unused)]
     pub async fn get_all_inputs(&self) -> Result<Vec<PathBuf>> {
+        use pdfcat::utils::PathResult;
         let patterns: Vec<String> = self
             .inputs
             .iter()
             .map(|p| p.display().to_string())
             .collect();
 
-        let mut all_inputs = pdfcat::utils::collect_paths_for_patterns(patterns)?;
+        let results = pdfcat::utils::collect_paths_for_patterns(patterns)?;
+
+        let mut all_inputs = Vec::new();
+        for result in results {
+            match result {
+                PathResult::Found(path) => all_inputs.push(path),
+                PathResult::Error(e) => eprintln!("warning: {}", e),
+            }
+        }
 
         if let Some(ref input_list_path) = self.input_list {
             let additional_inputs = self.read_input_list(input_list_path).await?;
@@ -365,24 +370,18 @@ impl Cli {
     ///
     /// Returns an error if the file cannot be read or contains invalid paths.
     async fn read_input_list(&self, path: &PathBuf) -> Result<Vec<PathBuf>> {
-        use tokio::fs::File;
-        use tokio::io::{AsyncBufReadExt, BufReader};
-
-        let file = if path.as_os_str() == "-" {
-            // Read from stdin
-            return Err(PdfCatError::invalid_config(
-                "Reading from stdin not yet implemented",
-            ));
+        let reader: Box<dyn AsyncBufRead + Unpin> = if path.as_os_str() == "-" {
+            Box::new(BufReader::new(tokio::io::stdin()))
         } else {
-            File::open(path)
-                .await
-                .map_err(|e| PdfCatError::FailedToReadInputList {
+            let file = tokio::fs::File::open(path).await.map_err(|e| {
+                PdfCatError::FailedToReadInputList {
                     path: path.clone(),
                     source: e,
-                })?
+                }
+            })?;
+            Box::new(BufReader::new(file))
         };
 
-        let reader = BufReader::new(file);
         let mut lines = reader.lines();
         let mut paths = Vec::new();
         let mut line_number = 0;

@@ -32,12 +32,14 @@ async fn run(cli: Cli) -> Result<(), PdfCatError> {
     // Validate CLI arguments
     cli.validate()?;
 
-    // Get all inputs (including from input-list if specified)
-    let all_inputs = cli.get_all_inputs().await?;
-
     // Convert CLI to config
     let mut config = cli.to_config()?;
-    config.inputs = all_inputs;
+    config.inputs = cli.get_all_inputs().await?;
+
+    // Validate the configuration
+    config.validate().map_err(|e| {
+        PdfCatError::invalid_config(format!("Configuration validation failed: {e}"))
+    })?;
 
     // Create output formatter
     let formatter = OutputFormatter::from_config(&config);
