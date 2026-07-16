@@ -40,7 +40,7 @@ impl BookmarkManager {
     /// # fn example(mut doc: Document) -> Result<(), Box<dyn std::error::Error>> {
     /// let manager = BookmarkManager::new();
     /// let paths = vec![Path::new("file1.pdf"), Path::new("file2.pdf")];
-    /// manager.add_bookmarks_for_files(&mut doc, &paths)?;
+    /// manager.add_bookmarks_for_files(&mut doc, &paths, &[])?;
     /// # Ok(())
     /// # }
     /// ```
