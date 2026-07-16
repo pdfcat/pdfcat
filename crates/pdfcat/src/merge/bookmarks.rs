@@ -40,11 +40,16 @@ impl BookmarkManager {
     /// # fn example(mut doc: Document) -> Result<(), Box<dyn std::error::Error>> {
     /// let manager = BookmarkManager::new();
     /// let paths = vec![Path::new("file1.pdf"), Path::new("file2.pdf")];
-    /// manager.add_bookmarks_for_files(&mut doc, &paths)?;
+    /// manager.add_bookmarks_for_files(&mut doc, &paths, &[])?;
     /// # Ok(())
     /// # }
     /// ```
-    pub fn add_bookmarks_for_files(&self, doc: &mut Document, file_paths: &[&Path]) -> Result<()> {
+    pub fn add_bookmarks_for_files(
+        &self,
+        doc: &mut Document,
+        file_paths: &[&Path],
+        page_starts: &[ObjectId],
+    ) -> Result<()> {
         if file_paths.is_empty() {
             return Ok(());
         }
@@ -78,7 +83,11 @@ impl BookmarkManager {
                 .and_then(|n| n.to_str())
                 .unwrap_or("Unknown");
 
-            let page_id = pages[page_idx].1;
+            let page_id = if let Some(&id) = page_starts.get(file_idx) {
+                id
+            } else {
+                pages[page_idx].1
+            };
 
             outline_items.push((title.to_string(), page_id));
         }
@@ -243,7 +252,7 @@ mod tests {
         let mut doc = create_test_document_with_pages(5);
         let manager = BookmarkManager::new();
 
-        let result = manager.add_bookmarks_for_files(&mut doc, &[]);
+        let result = manager.add_bookmarks_for_files(&mut doc, &[], &[]);
         assert!(result.is_ok());
     }
 
@@ -255,7 +264,7 @@ mod tests {
         let path = PathBuf::from("test.pdf");
         let paths = vec![path.as_path()];
 
-        let result = manager.add_bookmarks_for_files(&mut doc, &paths);
+        let result = manager.add_bookmarks_for_files(&mut doc, &paths, &[]);
         assert!(result.is_ok());
         assert!(manager.has_bookmarks(&doc));
     }
@@ -272,7 +281,7 @@ mod tests {
         ];
         let path_refs: Vec<&Path> = paths.iter().map(|p| p.as_path()).collect();
 
-        let result = manager.add_bookmarks_for_files(&mut doc, &path_refs);
+        let result = manager.add_bookmarks_for_files(&mut doc, &path_refs, &[]);
         assert!(result.is_ok());
         assert!(manager.has_bookmarks(&doc));
     }
@@ -293,7 +302,9 @@ mod tests {
         let path = PathBuf::from("test.pdf");
         let paths = vec![path.as_path()];
 
-        manager.add_bookmarks_for_files(&mut doc, &paths).unwrap();
+        manager
+            .add_bookmarks_for_files(&mut doc, &paths, &[])
+            .unwrap();
         assert!(manager.has_bookmarks(&doc));
 
         let result = manager.remove_bookmarks(&mut doc);

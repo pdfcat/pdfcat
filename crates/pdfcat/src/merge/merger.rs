@@ -186,9 +186,13 @@ impl Merger {
         let mut merged = loaded_pdfs[0].document.clone();
         let mut max_id = merged.max_id;
 
+        let mut page_starts = vec![];
         // Process first document for page ranges
         if let Some(ref page_range) = config.page_range {
             merged = self.page_extractor.extract_pages(&merged, page_range)?;
+        }
+        if let Some(page_id) = merged.page_iter().nth(0) {
+            page_starts.push(page_id);
         }
 
         // Apply rotation to first document if specified
@@ -215,6 +219,10 @@ impl Merger {
             doc.renumber_objects_with(max_id + 1);
             max_id = doc.max_id;
 
+            if let Some(page_id) = doc.page_iter().nth(0) {
+                page_starts.push(page_id);
+            }
+
             // Get page references from the document
             let doc_pages: Vec<ObjectId> = doc.get_pages().into_values().collect();
 
@@ -232,8 +240,11 @@ impl Merger {
                 .iter()
                 .map(|p| p.path.as_path())
                 .collect::<Vec<_>>();
-            self.bookmark_manager
-                .add_bookmarks_for_files(&mut merged, file_paths.as_slice())?;
+            self.bookmark_manager.add_bookmarks_for_files(
+                &mut merged,
+                file_paths.as_slice(),
+                page_starts.as_slice(),
+            )?;
         }
 
         // Set metadata if specified
